@@ -16,19 +16,19 @@ class ModuleInstance extends InstanceBase {
 	async init(config) {
 		this.config = config
 
-		this.matrixInfo = {}
-		this.CHOICES_INPUTS = []
-		this.CHOICES_OUTPUTS = []
+		// this.matrixInfo = {}
+		// this.CHOICES_INPUTS = []
+		// this.CHOICES_OUTPUTS = []
 
 		this.updateStatus(InstanceStatus.Ok)
 
 
 		this.init_udp()
-		await this.updateVariableDefinitions() // export variable definitions
-		await this.getMatrixInfo()
+		// await this.updateVariableDefinitions() // export variable definitions
+		// await this.getMatrixInfo()
 
 		this.updateActions() // export actions
-		this.updateFeedbacks() // export feedbacks
+		// this.updateFeedbacks() // export feedbacks
 	}
 
 	init_udp() {
@@ -37,12 +37,12 @@ class ModuleInstance extends InstanceBase {
 			delete this.socket
 		}
 
-		let tcpChunks = []
+		// let tcpChunks = []
 
 		this.updateStatus('connecting', 'Connecting')
 
-		if (this.config?.host) {
-			this.socket = new TCPHelper(this.config.host, 4001)
+		if (this.config?.host && this.config?.port) {
+			this.socket = new UDPHelper(this.config.host, this.config.port)
 
 			this.socket.on('status_change', (status, message) => {
 				console.log("status: ", status, message);
@@ -60,22 +60,24 @@ class ModuleInstance extends InstanceBase {
 				this.log('debug', 'Connected')
 
 				// get model info
-				this.socket.send(Buffer.from(`/*Type;\r\n`, 'utf8'))
+				// this.socket.send(Buffer.from(`/*Type;\r\n`, 'utf8'))
 			})
 
 			this.socket.on('data', (data) => {
 				const buf = Buffer.from(data)
-
-				if (buf.length <= 8) {
-					const length = tcpChunks.length
-					if (length === 0 || length === 2) {
-						tcpChunks = [buf]
-						return
-					} else if (length === 1) {
-						tcpChunks.push(buf)
-						this.parseData(tcpChunks.join(''))
-					}
-				}
+				console.log('here;s the data');
+				console.log(data);
+				console.log('Buffer:',buf)
+				// if (buf.length <= 8) {
+				// 	const length = tcpChunks.length
+				// 	if (length === 0 || length === 2) {
+				// 		tcpChunks = [buf]
+				// 		return
+				// 	} else if (length === 1) {
+				// 		tcpChunks.push(buf)
+				// 		this.parseData(tcpChunks.join(''))
+				// 	}
+				// }
 				// might need to split the lines
 				// const response = buf.toString().split(/\r?\n/)
 				// response.forEach((each) => this.parseData(each))
@@ -102,12 +104,12 @@ class ModuleInstance extends InstanceBase {
 			delete this.socket
 		}
 
-		await this.init_tcp()
-		try {
-			await this.getMatrixInfo()
-		} catch (e) {
-			this.log('warning', e)
-		}
+		await this.init_udp()
+		// try {
+		// 	await this.getMatrixInfo()
+		// } catch (e) {
+		// 	this.log('warning', e)
+		// }
 	}
 
 	// Return config fields for web config
@@ -130,24 +132,10 @@ class ModuleInstance extends InstanceBase {
 				regex: Regex.IP
 			},
 			{
-				type: 'dropdown',
-				label: 'Model',
-				id: 'model',
-				default: '4',
-				choices: [
-					{
-						id: '4',
-						label: 'INT-44HDX'
-					},
-					{
-						id: '6',
-						label: 'INT-66HDX'
-					},
-					{
-						id: '8',
-						label: 'INT-88HDX'
-					}
-				]
+				type: 'textinput',
+				id: 'port',
+				label: 'Port *ETC recommends setting the Input UDP Port property in the range of 4703-4727.',
+				width: 8
 			}
 		]
 	}
@@ -177,39 +165,39 @@ class ModuleInstance extends InstanceBase {
 	 * from the matrix. This sets the global variables CHOICES_INPUTS and CHOICES_OUTPUTS.
 	 * @return {void}
 	 */
-	setupChoices() {
-		const totalInputs = parseInt(this.config?.model)
-		this.CHOICES_INPUTS = []
-		this.CHOICES_OUTPUTS = []
+	// setupChoices() {
+	// 	const totalInputs = parseInt(this.config?.model)
+	// 	this.CHOICES_INPUTS = []
+	// 	this.CHOICES_OUTPUTS = []
 
-		if (totalInputs === undefined) {
-			return
-		}
+	// 	if (totalInputs === undefined) {
+	// 		return
+	// 	}
 
-		if (this.matrixInfo['admpassword'] !== undefined) {
-			for (let index = 0; index < totalInputs; index++) {
-				this.CHOICES_INPUTS.push({
-					id: `${index + 1}`,
-					label: this.matrixInfo[`Input${index + 1}Table`]
-				})
-				this.CHOICES_OUTPUTS.push({
-					id: `${index + 1}`,
-					label: this.matrixInfo[`Output${index + 1}Table`]
-				})
-			}
-		} else {
-			for (let index = 0; index < totalInputs; index++) {
-				this.CHOICES_INPUTS.push({
-					id: `${index + 1}`,
-					label: `Input ${index + 1}`
-				})
-				this.CHOICES_OUTPUTS.push({
-					id: `${index + 1}`,
-					label: `Output ${index + 1}`
-				})
-			}
-		}
-	}
+	// 	if (this.matrixInfo['admpassword'] !== undefined) {
+	// 		for (let index = 0; index < totalInputs; index++) {
+	// 			this.CHOICES_INPUTS.push({
+	// 				id: `${index + 1}`,
+	// 				label: this.matrixInfo[`Input${index + 1}Table`]
+	// 			})
+	// 			this.CHOICES_OUTPUTS.push({
+	// 				id: `${index + 1}`,
+	// 				label: this.matrixInfo[`Output${index + 1}Table`]
+	// 			})
+	// 		}
+	// 	} else {
+	// 		for (let index = 0; index < totalInputs; index++) {
+	// 			this.CHOICES_INPUTS.push({
+	// 				id: `${index + 1}`,
+	// 				label: `Input ${index + 1}`
+	// 			})
+	// 			this.CHOICES_OUTPUTS.push({
+	// 				id: `${index + 1}`,
+	// 				label: `Output ${index + 1}`
+	// 			})
+	// 		}
+	// 	}
+	// }
 
 	/**
 	 * This is a workaround for a fetch request because Node 18 has a bug and can't
@@ -218,104 +206,104 @@ class ModuleInstance extends InstanceBase {
 	 * @param  {JSON Object} body      The POST Body
 	 * @return {string}      The response as a string
 	 */
-	makeRequest(url, body) {
-		return new Promise((resolve, reject) => {
-			const postData = querystring.stringify(body)
+	// makeRequest(url, body) {
+	// 	return new Promise((resolve, reject) => {
+	// 		const postData = querystring.stringify(body)
 
-			const options = {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/javascript',
-					'Content-Length': Buffer.byteLength(postData)
-				},
-				insecureHTTPParser: true
-			}
+	// 		const options = {
+	// 			method: 'POST',
+	// 			headers: {
+	// 				'Content-Type': 'application/javascript',
+	// 				'Content-Length': Buffer.byteLength(postData)
+	// 			},
+	// 			insecureHTTPParser: true
+	// 		}
 
-			const req = http.request(url, options, (res) => {
-				let data = ''
-				res.on('data', (chunk) => {
-					data += chunk
-				})
-				res.on('end', () => {
-					resolve(data)
-				})
-			})
+	// 		const req = http.request(url, options, (res) => {
+	// 			let data = ''
+	// 			res.on('data', (chunk) => {
+	// 				data += chunk
+	// 			})
+	// 			res.on('end', () => {
+	// 				resolve(data)
+	// 			})
+	// 		})
 
-			req.on('error', (error) => {
-				reject(error)
-			})
+	// 		req.on('error', (error) => {
+	// 			reject(error)
+	// 		})
 
-			req.write(postData)
-			req.end()
-		})
-	}
+	// 		req.write(postData)
+	// 		req.end()
+	// 	})
+	// }
 
 	/**
 	 * Get Device info from Matrix. This uses the device's web server to get information.
 	 * It then stores it as this.matrixInfo
 	 * @return {Promise} Returns the received data as json object.
 	 */
-	async getMatrixInfo() {
-		if (this.config?.model === undefined) {
-			return
-		}
-		const model = this.config.model + this.config.model
-		const body = {
-			tag: 'ptn'
-		}
+	// async getMatrixInfo() {
+	// 	if (this.config?.model === undefined) {
+	// 		return
+	// 	}
+	// 	const model = this.config.model + this.config.model
+	// 	const body = {
+	// 		tag: 'ptn'
+	// 	}
 
-		try {
-			const url = `http://${this.config.host}/cgi-bin/MUH${model}TP_getsetparams.cgi`
-			const response = await this.makeRequest(url, body)
+	// 	try {
+	// 		const url = `http://${this.config.host}/cgi-bin/MUH${model}TP_getsetparams.cgi`
+	// 		const response = await this.makeRequest(url, body)
 
-			// This section doesn't work due to a bug with Node 18
-			// const response = await fetch(`http://${this.config.host}/cgi-bin/MUH${model}TP_getsetparams.cgi`,
-			// 	{
-			// 	method: 'post',
-			// 	body: JSON.stringify(body),
-			// 	headers: {
-			// 		'content-type': 'application/json'
-			// 	},
-			// 	insecureHTTPParser: true
-			// }
-			// )
-			// const dataText = await response.text()
+	// 		// This section doesn't work due to a bug with Node 18
+	// 		// const response = await fetch(`http://${this.config.host}/cgi-bin/MUH${model}TP_getsetparams.cgi`,
+	// 		// 	{
+	// 		// 	method: 'post',
+	// 		// 	body: JSON.stringify(body),
+	// 		// 	headers: {
+	// 		// 		'content-type': 'application/json'
+	// 		// 	},
+	// 		// 	insecureHTTPParser: true
+	// 		// }
+	// 		// )
+	// 		// const dataText = await response.text()
 
-			const data = JSON.parse(response.substring(2, response.length - 1).replace(/'/g, '"'))
-			this.matrixInfo = data
+	// 		const data = JSON.parse(response.substring(2, response.length - 1).replace(/'/g, '"'))
+	// 		this.matrixInfo = data
 
-			this.updateActions()
-			this.checkFeedbacks('output_has_input')
+	// 		this.updateActions()
+	// 		this.checkFeedbacks('output_has_input')
 
-			const totalInputs = parseInt(model)
-			const outputVariables = {}
-			for (let index = 0; index < totalInputs; index++) {
-				outputVariables[`output_${index + 1}`] = data[`CH${index + 1}Output`]
-				outputVariables[`input_${index + 1}_label`] = data[`Input${index + 1}Table`]
-				outputVariables[`output_${index + 1}_label`] = data[`Output${index + 1}Table`]
-				outputVariables[`input_${index + 1}_hdcp`] = data[`Input${index + 1}HDCP`]
-			}
+	// 		const totalInputs = parseInt(model)
+	// 		const outputVariables = {}
+	// 		for (let index = 0; index < totalInputs; index++) {
+	// 			outputVariables[`output_${index + 1}`] = data[`CH${index + 1}Output`]
+	// 			outputVariables[`input_${index + 1}_label`] = data[`Input${index + 1}Table`]
+	// 			outputVariables[`output_${index + 1}_label`] = data[`Output${index + 1}Table`]
+	// 			outputVariables[`input_${index + 1}_hdcp`] = data[`Input${index + 1}HDCP`]
+	// 		}
 
-			this.setVariableValues(outputVariables)
+	// 		this.setVariableValues(outputVariables)
 
-			if (data.LockKey) {
-				this.setVariableValues({ lock_state: 'Unlocked' })
-			} else {
-				this.setVariableValues({ lock_state: 'Locked' })
-			}
+	// 		if (data.LockKey) {
+	// 			this.setVariableValues({ lock_state: 'Unlocked' })
+	// 		} else {
+	// 			this.setVariableValues({ lock_state: 'Locked' })
+	// 		}
 
-			this.setVariableValues({
-				title_label: data['TitleLabelTable'],
-				lcd_readout_1: data['LCDReadout1'],
-				lcd_readout_2: data['LCDReadout2']
-			})
+	// 		this.setVariableValues({
+	// 			title_label: data['TitleLabelTable'],
+	// 			lcd_readout_1: data['LCDReadout1'],
+	// 			lcd_readout_2: data['LCDReadout2']
+	// 		})
 
-			return this.matrixInfo
-		} catch (error) {
-			this.log('error', 'Network error: ' + error.message)
-			console.error(error)
-		}
-	}
+	// 		return this.matrixInfo
+	// 	} catch (error) {
+	// 		this.log('error', 'Network error: ' + error.message)
+	// 		console.error(error)
+	// 	}
+	// }
 
 	/**
 	 * Handle all the TCP data from the device. This sets variables and checks feedbacks.
