@@ -1,6 +1,6 @@
-## Intelix Matrix Control
+## ETC Paradigm Architectual Control
 
-A module for controlling Intelix HDBaseT Matricies.
+A module for controlling ETC-Paradigm Architectual Control Systems.
 
 **Support for:**
 

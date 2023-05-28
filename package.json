@@ -1,30 +1,35 @@
 {
-	"name": "intelix-matrix",
-	"version": "1.0.3",
+	"name": "etc-paradigm",
+	"version": "1.0.0",
 	"api_version": "1.0.0",
-	"manufacturer": "Intelix",
-	"product": "INT-HDX",
-	"shortname": "intelix",
-	"description": "Control Intelix matrix INT-44HDX, INT-66HDX, or INT-88HDX.",
+	"manufacturer": "ETC",
+	"product": "ETC-Paradigm",
+	"shortname": "paradigm",
+	"description": "Control ETC-Paradigm Architectual Control System.",
 	"keywords": [
 		"Hardware",
-		"Matrix"
+		"ETC",
+		"Lighting"
 	],
-	"main": "index.js",
+	"main": "main.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"author": "zerbzman <zerbzman@gmail.com>",
 	"license": "MIT",
 	"dependencies": {
-		"node-fetch": "^2.6.7"
+		"@companion-module/base": "~1.1.1",
+		"node-fetch": "^3.3.0"
 	},
-	"homepage": "https://github.com/bitfocus/companion-module-intelix-matrix#readme",
+	"homepage": "https://github.com/bitfocus/companion-module-etc-paradigm#readme",
 	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-intelix-matrix/issues"
+		"url": "https://github.com/bitfocus/companion-module-etc-paradigm/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-intelix-matrix.git"
+		"url": "git+https://github.com/bitfocus/companion-module-etc-paradigm.git"
+	},
+	"devDependencies": {
+		"@companion-module/tools": "^1.0.0"
 	}
 }
