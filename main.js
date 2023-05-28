@@ -1,8 +1,9 @@
-const { InstanceBase, Regex, runEntrypoint, InstanceStatus, UDPHelper } = require('@companion-module/base')
+const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
 const UpdateFeedbacks = require('./feedbacks')
 const UpdateVariableDefinitions = require('./variables')
+const Paradigm = require('./paradigm')
 
 // const fetch = require('node-fetch')
 const http = require('http')
@@ -23,7 +24,7 @@ class ModuleInstance extends InstanceBase {
 		this.updateStatus(InstanceStatus.Ok)
 
 
-		this.init_udp()
+		await this.initDevice()
 		// await this.updateVariableDefinitions() // export variable definitions
 		// await this.getMatrixInfo()
 
@@ -31,59 +32,22 @@ class ModuleInstance extends InstanceBase {
 		// this.updateFeedbacks() // export feedbacks
 	}
 
-	init_udp() {
-		if (this.socket !== undefined) {
-			this.socket.destroy()
-			delete this.socket
+	async initDevice() {
+		if (this.config.host === undefined) {
+			return
 		}
+		try {
+			this.updateStatus('connecting', 'Connecting')
+			this.device = new Paradigm(this.config.host)
 
-		// let tcpChunks = []
-
-		this.updateStatus('connecting', 'Connecting')
-
-		if (this.config?.host && this.config?.port) {
-			this.socket = new UDPHelper(this.config.host, this.config.port)
-
-			this.socket.on('status_change', (status, message) => {
-				console.log("status: ", status, message);
-				this.updateStatus(status, message)
-			})
-
-			this.socket.on('error', (err) => {
-				console.log("error! OH NO");
-				this.updateStatus('unknown_error', err)
-				this.log('error', 'Network error: ' + err.message)
-			})
-
-			this.socket.on('listening', () => {
-				this.updateStatus('ok')
-				this.log('debug', 'Connected')
-
-				// get model info
-				// this.socket.send(Buffer.from(`/*Type;\r\n`, 'utf8'))
-			})
-
-			this.socket.on('data', (data) => {
-				const buf = Buffer.from(data)
-				console.log('here;s the data');
-				console.log(data);
-				console.log('Buffer:',buf)
-				// if (buf.length <= 8) {
-				// 	const length = tcpChunks.length
-				// 	if (length === 0 || length === 2) {
-				// 		tcpChunks = [buf]
-				// 		return
-				// 	} else if (length === 1) {
-				// 		tcpChunks.push(buf)
-				// 		this.parseData(tcpChunks.join(''))
-				// 	}
-				// }
-				// might need to split the lines
-				// const response = buf.toString().split(/\r?\n/)
-				// response.forEach((each) => this.parseData(each))
-			})
-		} else {
-			this.updateStatus(InstanceStatus.BadConfig)
+			await this.device.init()
+			this.updateStatus('ok')
+		} catch (error) {
+			this.updateStatus('error', error.message)
+			this.log('error', 'Network error: ' + error.message)
+			console.log(error)
+			this.device = undefined
+			return
 		}
 	}
 
@@ -210,37 +174,37 @@ class ModuleInstance extends InstanceBase {
 	 * @param  {JSON Object} body      The POST Body
 	 * @return {string}      The response as a string
 	 */
-	// makeRequest(url, body) {
-	// 	return new Promise((resolve, reject) => {
-	// 		const postData = querystring.stringify(body)
+	makeRequest(url, body) {
+		return new Promise((resolve, reject) => {
+			const postData = querystring.stringify(body)
 
-	// 		const options = {
-	// 			method: 'POST',
-	// 			headers: {
-	// 				'Content-Type': 'application/javascript',
-	// 				'Content-Length': Buffer.byteLength(postData)
-	// 			},
-	// 			insecureHTTPParser: true
-	// 		}
+			const options = {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/javascript',
+					'Content-Length': Buffer.byteLength(postData)
+				},
+				insecureHTTPParser: true
+			}
 
-	// 		const req = http.request(url, options, (res) => {
-	// 			let data = ''
-	// 			res.on('data', (chunk) => {
-	// 				data += chunk
-	// 			})
-	// 			res.on('end', () => {
-	// 				resolve(data)
-	// 			})
-	// 		})
+			const req = http.request(url, options, (res) => {
+				let data = ''
+				res.on('data', (chunk) => {
+					data += chunk
+				})
+				res.on('end', () => {
+					resolve(data)
+				})
+			})
 
-	// 		req.on('error', (error) => {
-	// 			reject(error)
-	// 		})
+			req.on('error', (error) => {
+				reject(error)
+			})
 
-	// 		req.write(postData)
-	// 		req.end()
-	// 	})
-	// }
+			req.write(postData)
+			req.end()
+		})
+	}
 
 	/**
 	 * Get Device info from Matrix. This uses the device's web server to get information.
