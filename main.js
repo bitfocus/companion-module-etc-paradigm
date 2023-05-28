@@ -55,7 +55,7 @@ class ModuleInstance extends InstanceBase {
 				this.log('error', 'Network error: ' + err.message)
 			})
 
-			this.socket.on('connect', () => {
+			this.socket.on('listening', () => {
 				this.updateStatus('ok')
 				this.log('debug', 'Connected')
 
@@ -146,13 +146,17 @@ class ModuleInstance extends InstanceBase {
 	 * @return {void}
 	 */
 	sendToDevice(cmd) {
-		const end = '\r\n'
-		let sendBuf = Buffer.from(cmd + end, 'latin1')
+		// const end = '\r\n'
+		const end = '\r'
+		let cmdBuf = Buffer.from(cmd, 'latin1')
+		let endBuf = Buffer.from( '0D', 'hex')
+		let sendBuf = Buffer.concat([cmdBuf, endBuf])
 
 		if (sendBuf != '') {
 			this.log('debug', `sending ${sendBuf} to ${this.config.host}`)
 
-			if (this.socket !== undefined && this.socket.isConnected) {
+			// if (this.socket !== undefined && this.socket.isConnected) {
+			if (this.socket !== undefined) {
 				this.socket.send(sendBuf).catch((e) => this.log('error', `Could not connect to device. ${e}`))
 			} else {
 				this.log('debug', 'Socket not connected :(')
