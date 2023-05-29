@@ -2,63 +2,129 @@ module.exports = async function (self) {
 
 	let variables = [
 		{
-			name: 'Front Panel Keys Lock',
-			variableId: 'lock_state'
+			name: 'Processor Name',
+			variableId: 'processor_name'
 		},
 		{
-			name: 'Title Label',
-			variableId: 'title_label'
+			name: 'Processor Number',
+			variableId: 'processor_number'
 		},
 		{
-			name: 'LCD Readout 1',
-			variableId: 'lcd_readout_1'
+			name: 'Current Time',
+			variableId: 'current_time'
 		},
 		{
-			name: 'LCD Readout 2',
-			variableId: 'lcd_readout_2'
+			name: 'Uptime',
+			variableId: 'uptime'
+		},
+		{
+			name: 'Dimmer Rack',
+			variableId: 'rack_status'
+		},
+		{
+			name: 'Stations',
+			variableId: 'station_count'
 		},
 	]
 
-	const totalInputs = parseInt(self.config.model)
-	for (let index = 0; index < totalInputs; index++) {
-		variables.push({
-			name: `Output ${index + 1}`,
-			variableId: `output_${index + 1}`
-		})
-	}
+	const features = ['macros', 'presets', 'sequences', 'channels', 'walls', 'overrides']
+	if (self.device.connection !== undefined) {
+		
 
-	// set the input names
-	for (let index = 0; index < totalInputs; index++) {
-		variables.push({
-			name: `Input ${index + 1} name`,
-			variableId: `input_${index + 1}_label`
-		})
-	}
-	// set the output names
-	for (let index = 0; index < totalInputs; index++) {
-		variables.push({
-			name: `Output ${index + 1} name`,
-			variableId: `output_${index + 1}_label`
-		})
-	}
+	features.filter(each => each !== 'channels').forEach(each => {
+		variables.push(buildVariables(self.device, each, ' name', '_label'))
+		variables.push(buildVariables(self.device, each, ' state', '_state'))
+	})
+	variables.push(buildVariables(self.device, 'channels', ' name', '_label'))
+	variables.push(buildVariables(self.device, 'channels', ' level', '_level'))
 
-	// set the HDCP info
-	for (let index = 0; index < totalInputs; index++) {
-		variables.push({
-			name: `Input ${index + 1} HDCP`,
-			variableId: `input_${index + 1}_hdcp`
-		})
+	variables = variables.flat()
 	}
+	
+
+	// // set the input names
+	// const totalPresets = parseInt(self.connection.presets)
+	// for (let index = 0; index < totalInputs; index++) {
+	// 	variables.push({
+	// 		name: `Input ${index + 1} name`,
+	// 		variableId: `input_${index + 1}_label`
+	// 	})
+	// }
+	// // set the output names
+	// for (let index = 0; index < totalInputs; index++) {
+	// 	variables.push({
+	// 		name: `Output ${index + 1} name`,
+	// 		variableId: `output_${index + 1}_label`
+	// 	})
+	// }
+
+	// // set the HDCP info
+	// for (let index = 0; index < totalInputs; index++) {
+	// 	variables.push({
+	// 		name: `Input ${index + 1} HDCP`,
+	// 		variableId: `input_${index + 1}_hdcp`
+	// 	})
+	// }
 
 	self.setVariableDefinitions(variables)
 
+	if (self.device.connection === undefined) {
+		self.setVariableValues({
+			'processor_name': '',
+			'processor_number': '',
+			'current_time': '',
+			'uptime': '',
+			'rack_status': '',
+			'station_count': '',
+		})
+	} else {
+		self.setVariableValues({
+			'processor_name': self.device.system.processor_name,
+			'processor_number': self.device.system.processor_number,
+			'current_time': self.device.system.current_time,
+			'uptime': self.device.system.uptime,
+			'rack_status': self.device.system.rack_status,
+			'station_count': self.device.system.stations.length,
+		})
+		let variableValues = {}
+		features.filter(each => each !== 'channels').forEach(each => {
+			variableValues = buildVariablesValues(self.device, variableValues, each, 'name', '_label')
+			variableValues = buildVariablesValues(self.device, variableValues, each, 'state', '_state')
+		})
+		variableValues = buildVariablesValues(self.device, variableValues, 'channels', 'name', '_label')
+		variableValues = buildVariablesValues(self.device, variableValues, 'channels', 'level', '_level')
 
-	self.setVariableValues({'lock_state': ''})
-	const inputVariables = {}
-	for (let index = 0; index < totalInputs; index++) {
-		inputVariables[`output_${index + 1}`] = ''
-		inputVariables[`input_${index + 1}_label`] = `Input ${index + 1}`
-		inputVariables[`output_${index + 1}_label`] = `Output ${index + 1}`
+		self.setVariableValues(variableValues)
 	}
-	self.setVariableValues(inputVariables)
+
+	
+
+	// const inputVariables = {}
+	// for (let index = 0; index < totalInputs; index++) {
+	// 	inputVariables[`output_${index + 1}`] = ''
+	// 	inputVariables[`input_${index + 1}_label`] = `Input ${index + 1}`
+	// 	inputVariables[`output_${index + 1}_label`] = `Output ${index + 1}`
+	// }
+	// self.setVariableValues(inputVariables)
+}
+
+function buildVariables(info, feature, text = ' name', ending = '_label') {
+	const variables = []
+	const total = info[feature].length
+	for (let index = 0; index < total; index++) {
+		variables.push({
+			name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${index + 1}${text}`,
+			variableId: `${feature}_${index + 1}${ending}`
+		})
+	}
+	return variables
+}
+
+function buildVariablesValues(info, variables, feature, text = 'name', ending = '_label') {
+	// const variables = {}
+	const total = info[feature].length
+	for (let index = 0; index < total; index++) {
+		variables[`${feature}_${index + 1}${ending}`] = info[feature][index][text]
+	}
+	return variables
 }

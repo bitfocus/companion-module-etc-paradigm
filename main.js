@@ -25,7 +25,7 @@ class ModuleInstance extends InstanceBase {
 
 
 		await this.initDevice()
-		// await this.updateVariableDefinitions() // export variable definitions
+		await this.updateVariableDefinitions() // export variable definitions
 		// await this.getMatrixInfo()
 
 		this.updateActions() // export actions
@@ -43,6 +43,7 @@ class ModuleInstance extends InstanceBase {
 			await this.device.init()
 			this.updateStatus('ok')
 		} catch (error) {
+			console.log('here');
 			this.updateStatus('error', error.message)
 			this.log('error', 'Network error: ' + error.message)
 			console.log(error)

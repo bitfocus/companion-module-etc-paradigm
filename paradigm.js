@@ -12,6 +12,8 @@ class Paradigm {
         this.channels = []
         this.sequences = []
         this.url = `http://${this.host}/get/`
+        this.features = ['system', 'macros', 'presets', 'sequences', 'channels', 'walls', 'overrides', 'spaces']
+        this.featuresList = ['macros', 'presets', 'sequences', 'channels', 'walls', 'overrides']
 		// this.buildBuses()
 	}
 
@@ -31,27 +33,28 @@ class Paradigm {
               }
         } catch (error) {
             console.log(error);
+            throw error
         }
     }
 
     async connect() {
         // get system info
         try {
-            await this.getInfo('system')
-            await this.getInfo('walls')
-            await this.getInfo('macros')
-            await this.getInfo('spaces')
-            await this.getInfo('overrides')
-            await this.getInfo('channels')
-            await this.getInfo('sequences')
+            
+            const allFeatures = this.features.map(feature => this.getInfo(feature))
+            await Promise.all(allFeatures)
+            // order all the items
+            this.featuresList.forEach(each => {
+                this[each].sort((a, b) => a.id - b.id)
+            })
+            console.log(this)
+            return this
 
         // this.connection =
         } catch(error) {
             console.log(error);
+            return undefined
         }
-        
-        console.log(this)
-        return this
     }
 
 	async init() {
