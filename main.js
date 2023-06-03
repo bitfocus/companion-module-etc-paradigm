@@ -18,8 +18,12 @@ class ModuleInstance extends InstanceBase {
 		this.config = config
 
 		// this.matrixInfo = {}
-		// this.CHOICES_INPUTS = []
-		// this.CHOICES_OUTPUTS = []
+		this.CHOICES_MACROS = []
+		this.CHOICES_PRESETS = []
+		this.CHOICES_WALLS = []
+		this.CHOICES_SEQUENCES = []
+		this.CHOICES_CHANNELS = []
+		this.CHOICES_OVERRIDES = []
 
 		this.updateStatus(InstanceStatus.Ok)
 
@@ -105,6 +109,39 @@ class ModuleInstance extends InstanceBase {
 		]
 	}
 
+	async getStates() {
+		const result = await this.device.getControlStatus()
+
+		let variableValues = {}
+		this.device.features.filter(each => each !== 'channels' && each !== 'system' && each !== 'spaces').forEach(each => {
+			console.log('feauture: ', each);
+			variableValues = this.buildVariablesValuesFromControlStatus(result[each], variableValues, each, 'state', '_state')
+		})
+		variableValues = this.buildVariablesValuesFromControlStatus(result.channels, variableValues, 'channels', 'level', '_level')
+		console.log('values:',variableValues);
+		this.setVariableValues(variableValues)
+
+	}
+
+	//TODO: Refactor this
+	buildVariablesValuesFromControlStatus(info, variables, feature, text = 'name', ending = '_label') {
+		// const variables = {}
+		let total
+		if (Array.isArray(info)) {
+			total = info.length
+		} else {
+			total = Object.keys(info).length
+		}
+
+		const keys = Object.keys(info)
+
+		for (let index = 0; index < total; index++) {
+			// variables[`${feature}_${index + 1}${ending}`] = info[index][text]
+			variables[`${feature}_${keys[index]}${ending}`] = info[keys[index]]
+		}
+		return variables
+	}
+
 	/**
 	 * Send the TCP command to the device.
 	 * @param  {string} cmd  TCP Command
@@ -134,39 +171,66 @@ class ModuleInstance extends InstanceBase {
 	 * from the matrix. This sets the global variables CHOICES_INPUTS and CHOICES_OUTPUTS.
 	 * @return {void}
 	 */
-	// setupChoices() {
-	// 	const totalInputs = parseInt(this.config?.model)
-	// 	this.CHOICES_INPUTS = []
-	// 	this.CHOICES_OUTPUTS = []
+	setupChoices() {
+		// const totalInputs = parseInt(this.config?.model)
+		let totalMacros = 1024
+		this.CHOICES_MACROS = []
+		this.CHOICES_PRESETS = []
+		this.CHOICES_WALLS = []
+		this.CHOICES_SEQUENCES = []
+		this.CHOICES_CHANNELS = []
+		this.CHOICES_OVERRIDES = []
 
-	// 	if (totalInputs === undefined) {
-	// 		return
-	// 	}
+		if (this.device.connection !== undefined) {
+			this.CHOICES_MACROS = this.buildChoices(this.device.macros)
+			this.CHOICES_PRESETS = this.buildChoices(this.device.presets)
+			this.CHOICES_WALLS = this.buildChoices(this.device.walls)
+			this.CHOICES_SEQUENCES = this.buildChoices(this.device.sequences)
+			this.CHOICES_CHANNELS = this.buildChoices(this.device.channels)
+			this.CHOICES_OVERRIDES = this.buildChoices(this.device.overrides)
+		} else {
+			this.CHOICES_MACROS = this.buildChoices([], 'Macro', 1024 )
+			this.CHOICES_PRESETS = this.buildChoices([], 'Preset', 1024 )
+			this.CHOICES_WALLS = this.buildChoices([], 'Wall', 128 )
+			this.CHOICES_SEQUENCES = this.buildChoices([], 'Sequence', 512 )
+			this.CHOICES_CHANNELS = this.buildChoices([], 'Channels', 1024 )
+			this.CHOICES_OVERRIDES = this.buildChoices([], 'Override', 1024 )
+		}
+		console.log(this.CHOICES_CHANNELS);
+	}
 
-	// 	if (this.matrixInfo['admpassword'] !== undefined) {
-	// 		for (let index = 0; index < totalInputs; index++) {
-	// 			this.CHOICES_INPUTS.push({
-	// 				id: `${index + 1}`,
-	// 				label: this.matrixInfo[`Input${index + 1}Table`]
-	// 			})
-	// 			this.CHOICES_OUTPUTS.push({
-	// 				id: `${index + 1}`,
-	// 				label: this.matrixInfo[`Output${index + 1}Table`]
-	// 			})
-	// 		}
-	// 	} else {
-	// 		for (let index = 0; index < totalInputs; index++) {
-	// 			this.CHOICES_INPUTS.push({
-	// 				id: `${index + 1}`,
-	// 				label: `Input ${index + 1}`
-	// 			})
-	// 			this.CHOICES_OUTPUTS.push({
-	// 				id: `${index + 1}`,
-	// 				label: `Output ${index + 1}`
-	// 			})
-	// 		}
-	// 	}
-	// }
+	buildChoices(info, feature = '', count = 0) {
+		const variables = []
+		let total
+		if (Array.isArray(info)) {
+			total = info.length
+		} else {
+			total = Object.keys(info).length
+		}
+
+		if (count) {
+			total = count
+		}
+
+		if (feature === '') {
+			for (let index = 0; index < total; index++) {
+				variables.push({
+					id: `${info[index].id}`,
+					label: info[index].name,
+				})
+			}
+		} else {
+			for (let index = 0; index < total; index++) {
+				variables.push({
+					id: `${index + 1}`,
+					label: `${feature} ${index + 1}`,
+				})
+			}
+		}
+		
+		
+		return variables
+	}
 
 	/**
 	 * This is a workaround for a fetch request because Node 18 has a bug and can't

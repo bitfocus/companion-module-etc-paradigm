@@ -32,11 +32,11 @@ module.exports = async function (self) {
 		
 
 	features.filter(each => each !== 'channels').forEach(each => {
-		variables.push(buildVariables(self.device, each, ' name', '_label'))
-		variables.push(buildVariables(self.device, each, ' state', '_state'))
+		variables.push(buildVariables(self.device[each], each, ' name', '_label'))
+		variables.push(buildVariables(self.device[each], each, ' state', '_state'))
 	})
-	variables.push(buildVariables(self.device, 'channels', ' name', '_label'))
-	variables.push(buildVariables(self.device, 'channels', ' level', '_level'))
+	variables.push(buildVariables(self.device.channels, 'channels', ' name', '_label'))
+	variables.push(buildVariables(self.device.channels, 'channels', ' level', '_level'))
 
 	variables = variables.flat()
 	}
@@ -88,11 +88,11 @@ module.exports = async function (self) {
 		})
 		let variableValues = {}
 		features.filter(each => each !== 'channels').forEach(each => {
-			variableValues = buildVariablesValues(self.device, variableValues, each, 'name', '_label')
-			variableValues = buildVariablesValues(self.device, variableValues, each, 'state', '_state')
+			variableValues = buildVariablesValues(self.device[each], variableValues, each, 'name', '_label')
+			variableValues = buildVariablesValues(self.device[each], variableValues, each, 'state', '_state')
 		})
-		variableValues = buildVariablesValues(self.device, variableValues, 'channels', 'name', '_label')
-		variableValues = buildVariablesValues(self.device, variableValues, 'channels', 'level', '_level')
+		variableValues = buildVariablesValues(self.device.channels, variableValues, 'channels', 'name', '_label')
+		variableValues = buildVariablesValues(self.device.channels, variableValues, 'channels', 'level', '_level')
 
 		self.setVariableValues(variableValues)
 	}
@@ -110,11 +110,21 @@ module.exports = async function (self) {
 
 function buildVariables(info, feature, text = ' name', ending = '_label') {
 	const variables = []
-	const total = info[feature].length
+	let total
+	if (Array.isArray(info)) {
+		total = info.length
+	} else {
+		total = Object.keys(info).length
+	}
+	
 	for (let index = 0; index < total; index++) {
+		// variables.push({
+		// 	name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${index + 1}${text}`,
+		// 	variableId: `${feature}_${index + 1}${ending}`
+		// })
 		variables.push({
-			name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${index + 1}${text}`,
-			variableId: `${feature}_${index + 1}${ending}`
+			name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${info[index].id}${text}`,
+			variableId: `${feature}_${info[index].id}${ending}`
 		})
 	}
 	return variables
@@ -122,9 +132,15 @@ function buildVariables(info, feature, text = ' name', ending = '_label') {
 
 function buildVariablesValues(info, variables, feature, text = 'name', ending = '_label') {
 	// const variables = {}
-	const total = info[feature].length
+	let total
+	if (Array.isArray(info)) {
+		total = info.length
+	} else {
+		total = Object.keys(info).length
+	}
 	for (let index = 0; index < total; index++) {
-		variables[`${feature}_${index + 1}${ending}`] = info[feature][index][text]
+		// variables[`${feature}_${index + 1}${ending}`] = info[index][text]
+		variables[`${feature}_${info[index].id}${ending}`] = info[index][text]
 	}
 	return variables
 }
