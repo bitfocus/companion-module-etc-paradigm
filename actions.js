@@ -30,15 +30,12 @@ module.exports = function (self) {
 				],
 				callback: async (event) => {
 					try {
-						let result = await self.device.runPresetAction(event.options.id_state, event.options.id_presets)
+						await self.device.runPresetAction(event.options.id_state, event.options.id_presets)
 						//update the value
 						await self.getStates()
-						console.log('result:', result);
 					} catch (error) {
-						console.log(error)
+						self.log('error', error.message)
 					}
-					
-					// maybe update the variable
 				},
 			},
 			recordPreset: {
@@ -55,8 +52,12 @@ module.exports = function (self) {
 					}
 				],
 				callback: async (event) => {
-					await self.device.runOverridesAction('record', event.options.id_presets)
-					// maybe update the variable
+					try {
+						await self.device.runOverridesAction('record', event.options.id_presets)
+						await self.getStates()
+					} catch (error) {
+						self.log('error', error.message)
+					}
 				},
 			},
 			changeOverridesState: {
@@ -85,8 +86,12 @@ module.exports = function (self) {
 					}
 				],
 				callback: async (event) => {
-					await self.device.runOverridesAction(event.options.id_state, event.options.id_overrides)
-					// maybe update the variable
+					try {
+						await self.device.runOverridesAction(event.options.id_state, event.options.id_overrides)
+						await self.getStates()
+					} catch (error) {
+						self.log('error', error.message)
+					}
 				},
 			},
 			changeMacroState: {
@@ -115,8 +120,12 @@ module.exports = function (self) {
 					}
 				],
 				callback: async (event) => {
-					await self.device.runMacroAction(event.options.id_state, event.options.id_macro)
-					// maybe update the variable
+					try {
+						await self.device.runMacroAction(event.options.id_state, event.options.id_macro)
+						await self.getStates()
+					} catch (error) {
+						self.log('error', error.message)
+					}
 				},
 			},
 			changeWallState: {
@@ -132,8 +141,12 @@ module.exports = function (self) {
 					}
 				],
 				callback: async (event) => {
-					await self.device.runWallAction(event.options.id_state, event.options.id_wall)
-					// maybe update the variable
+					try {
+						await self.device.runWallAction(event.options.id_state, event.options.id_wall)
+						await self.getStates()
+					} catch (error) {
+						self.log('error', error.message)
+					}
 				},
 			},
 			changeOverridesState: {
@@ -161,8 +174,12 @@ module.exports = function (self) {
 					}
 				],
 				callback: async (event) => {
-					await self.device.runOverridesAction(event.options.id_state, event.options.id_overrides)
-					// maybe update the variable
+					try {
+						await self.device.runOverridesAction(event.options.id_state, event.options.id_overrides)
+						await self.getStates()
+					} catch (error) {
+						self.log('error', error.message)
+					}
 				},
 			},
 			runSequenceAction: {
@@ -192,8 +209,12 @@ module.exports = function (self) {
 					}
 				],
 				callback: async (event) => {
-					await self.device.runSequencesAction(event.options.id_state, event.options.id_sequences)
-					// maybe update the variable
+					try {
+						await self.device.runSequencesAction(event.options.id_state, event.options.id_sequences)
+						await self.getStates()
+					} catch (error) {
+						self.log('error', error.message)
+					}
 				},
 			},
 			setChannelLevel: {
@@ -218,10 +239,57 @@ module.exports = function (self) {
 					}
 				],
 				callback: async (event) => {
-					await self.device.runChannelsAction('set_level', event.options.id_channels, event.options.id_state)
-					// maybe update the variable
+					try {
+						await self.device.runChannelsAction('set_level', event.options.id_channels, event.options.id_state)
+						await self.getStates()
+					} catch (error) {
+						self.log('error', error.message)
+					}
+				},
+			},
+			adjustChannelLevel: {
+				name: 'Adjust Channel Level',
+				options: [
+					{
+						type: 'dropdown',
+						label: 'Channels',
+						id: 'id_channels',
+						default: '1',
+						tooltip: '',
+						choices: self.CHOICES_CHANNELS
+					},
+					{
+						type: 'number',
+						label: 'Adjust level in increments from -100 to 100',
+						id: 'id_state',
+						default: 1,
+						tooltip: 'This is helpful for Rotary Actions.',
+						min: -100,
+						max: 100
+					}
+				],
+				callback: async (event) => {
+					try {
+						// get the current state and add the level to it
+						const variableID = `channels_${event.options.id_channels}_level`
+						const currentValue = await self.getVariableValue(variableID)
+
+						const newValue = clamp(currentValue + event.options.id_state, 0, 100)
+						await self.device.runChannelsAction('set_level', event.options.id_channels, newValue)
+
+						// Update the value of this variable directly to have better performance
+						const returnVariable = {}
+						returnVariable[variableID] = newValue
+						self.setVariableValues(returnVariable)
+					} catch (error) {
+						self.log('error', error.message)
+					}
 				},
 			}
 		}
 	)
 }
+
+function clamp(value, min, max) {
+	return Math.min(Math.max(value, min), max);
+  }
