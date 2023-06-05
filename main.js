@@ -25,6 +25,8 @@ class ModuleInstance extends InstanceBase {
 		this.CHOICES_CHANNELS = []
 		this.CHOICES_OVERRIDES = []
 
+		this.pollFrequency = 5000
+
 		this.updateStatus(InstanceStatus.Ok)
 
 
@@ -46,6 +48,9 @@ class ModuleInstance extends InstanceBase {
 
 			await this.device.init()
 			this.updateStatus('ok')
+
+			// Start polling
+			this.subscribeToDevice()
 		} catch (error) {
 			console.log('here');
 			this.updateStatus('error', error.message)
@@ -56,11 +61,23 @@ class ModuleInstance extends InstanceBase {
 		}
 	}
 
+	async subscribeToDevice() {
+		try {
+			await this.getStates()
+
+			this.poll = setTimeout(() => this.subscribeToDevice(), this.config.pollFrequency);
+		} catch (error) {
+			this.updateStatus('error', error.message)
+		}
+	}
+
+	unsubscribeToDevice() {
+		clearTimeout(this.poll)
+	}
+
 	// When module gets deleted
 	async destroy() {
-		if (this.socket !== undefined) {
-			this.socket.destroy()
-		}
+		this.unsubscribeToDevice()
 
 		this.log('debug', 'destroy')
 	}
@@ -68,31 +85,13 @@ class ModuleInstance extends InstanceBase {
 	async configUpdated(config) {
 		this.config = config
 
-		if (this.socket !== undefined) {
-			this.socket.destroy()
-			delete this.socket
-		}
-
-		await this.init_udp()
-		// try {
-		// 	await this.getMatrixInfo()
-		// } catch (e) {
-		// 	this.log('warning', e)
-		// }
+		this.unsubscribeToDevice()
+		await this.initDevice()
 	}
 
 	// Return config fields for web config
 	getConfigFields() {
 		return [
-			{
-				type: 'static-text',
-				id: 'info',
-				label: 'Information',
-				width: 12,
-				value: `
-				This should automatically pull your model but you can specify which model you have.
-			`
-			},
 			{
 				type: 'textinput',
 				id: 'host',
@@ -101,10 +100,12 @@ class ModuleInstance extends InstanceBase {
 				regex: Regex.IP
 			},
 			{
-				type: 'textinput',
-				id: 'port',
-				label: 'Port *ETC recommends setting the Input UDP Port property in the range of 4703-4727.',
-				width: 8
+				id: 'pollFrequency',
+				type: 'number',
+				label: 'Polling Time (ms)',
+				default: 5000,
+				min: 200,
+				max: 10000
 			}
 		]
 	}
