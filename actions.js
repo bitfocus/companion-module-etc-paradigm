@@ -275,12 +275,13 @@ module.exports = function (self) {
 						const currentValue = await self.getVariableValue(variableID)
 
 						const newValue = clamp(currentValue + event.options.id_state, 0, 100)
-						await self.device.runChannelsAction('set_level', event.options.id_channels, newValue)
 
 						// Update the value of this variable directly to have better performance
 						const returnVariable = {}
 						returnVariable[variableID] = newValue
 						self.setVariableValues(returnVariable)
+
+						await self.device.runChannelsAction('set_level', event.options.id_channels, newValue)
 					} catch (error) {
 						self.log('error', error.message)
 					}
