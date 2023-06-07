@@ -11,7 +11,6 @@ module.exports = function (self) {
 						label: 'Presets',
 						id: 'id_presets',
 						default: '1',
-						// tooltip: 'Which input would you like sent to a specific output?',
 						choices: self.CHOICES_PRESETS,
 						minChoicesForSearch: 0
 					},
@@ -46,7 +45,6 @@ module.exports = function (self) {
 						label: 'Presets',
 						id: 'id_presets',
 						default: '1',
-						// tooltip: 'Which input would you like sent to a specific output?',
 						choices: self.CHOICES_PRESETS,
 						minChoicesForSearch: 0
 					}
@@ -68,7 +66,6 @@ module.exports = function (self) {
 						label: 'Overrides',
 						id: 'id_overrides',
 						default: '1',
-						// tooltip: 'Which input would you like sent to a specific output?',
 						choices: self.CHOICES_OVERRIDES,
 						minChoicesForSearch: 0
 					},
@@ -143,39 +140,6 @@ module.exports = function (self) {
 				callback: async (event) => {
 					try {
 						await self.device.runWallAction(event.options.id_state, event.options.id_wall)
-						await self.getStates()
-					} catch (error) {
-						self.log('error', error.message)
-					}
-				},
-			},
-			changeOverridesState: {
-				name: 'Change Overrides State',
-				options: [
-					{
-						type: 'dropdown',
-						label: 'Overrides',
-						id: 'id_overrides',
-						default: '1',
-						tooltip: 'Which input would you like sent to a specific output?',
-						choices: self.CHOICES_OVERRIDES
-					},
-					{
-						type: 'dropdown',
-						label: 'Activate/Deactivate',
-						id: 'id_state',
-						default: 'activate',
-						tooltip: '',
-						choices: [
-							{ id: 'activate', label: 'Activate' },
-							{ id: 'deactivate', label: 'Deactivate' }
-						],
-						minChoicesForSearch: 0
-					}
-				],
-				callback: async (event) => {
-					try {
-						await self.device.runOverridesAction(event.options.id_state, event.options.id_overrides)
 						await self.getStates()
 					} catch (error) {
 						self.log('error', error.message)
