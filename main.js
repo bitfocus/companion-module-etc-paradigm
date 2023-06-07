@@ -32,10 +32,9 @@ class ModuleInstance extends InstanceBase {
 
 		await this.initDevice()
 		await this.updateVariableDefinitions() // export variable definitions
-		// await this.getMatrixInfo()
 
 		this.updateActions() // export actions
-		// this.updateFeedbacks() // export feedbacks
+		this.updateFeedbacks() // export feedbacks
 	}
 
 	async initDevice() {
@@ -115,13 +114,11 @@ class ModuleInstance extends InstanceBase {
 
 		let variableValues = {}
 		this.device.features.filter(each => each !== 'channels' && each !== 'system' && each !== 'spaces').forEach(each => {
-			console.log('feauture: ', each);
 			variableValues = this.buildVariablesValuesFromControlStatus(result[each], variableValues, each, 'state', '_state')
 		})
 		variableValues = this.buildVariablesValuesFromControlStatus(result.channels, variableValues, 'channels', 'level', '_level')
-		console.log('values:',variableValues);
 		this.setVariableValues(variableValues)
-
+		this.checkFeedbacks()
 	}
 
 	//TODO: Refactor this
