@@ -28,47 +28,38 @@ module.exports = async function (self) {
 	]
 
 	const features = ['macros', 'presets', 'sequences', 'channels', 'walls', 'overrides']
-	if (self.device.connection !== undefined) {
-		
+	const isDeviceLoaded = Object.keys(self.deviceInfo).length
 
-	features.filter(each => each !== 'channels').forEach(each => {
-		variables.push(buildVariables(self.device[each], each, ' name', '_label'))
-		variables.push(buildVariables(self.device[each], each, ' state', '_state'))
-	})
-	variables.push(buildVariables(self.device.channels, 'channels', ' name', '_label'))
-	variables.push(buildVariables(self.device.channels, 'channels', ' level', '_level'))
+	if (isDeviceLoaded) {
+		features.filter(each => each !== 'channels').forEach(each => {
+			variables.push(buildVariables(self.deviceInfo[each], each.slice(0, -1), ' name', '_label'))
+			variables.push(buildVariables(self.deviceInfo[each], each.slice(0, -1), ' state', '_state'))
+		})
+		variables.push(buildVariables(self.deviceInfo.channels, 'channel', ' name', '_label'))
+		variables.push(buildVariables(self.deviceInfo.channels, 'channel', ' level', '_level'))
 
-	variables = variables.flat()
+		variables = variables.flat()
+	} else {
+		// set the default variables
+		variables.push(buildVariables([], 'Macro', ' name', '_label', 1024 ))
+		variables.push(buildVariables([], 'Macro', ' state', '_state', 1024 ))
+		variables.push(buildVariables([], 'Preset', ' name', '_label', 1024 ))
+		variables.push(buildVariables([], 'Preset', ' state', '_state', 1024 ))
+		variables.push(buildVariables([], 'Wall', ' name', '_label', 128 ))
+		variables.push(buildVariables([], 'Wall', ' state', '_state', 128 ))
+		variables.push(buildVariables([], 'Sequence', ' name', '_label', 512 ))
+		variables.push(buildVariables([], 'Sequence', ' state', '_state', 512 ))
+		variables.push(buildVariables([], 'Channel', ' name', '_label', 1024 ))
+		variables.push(buildVariables([], 'Channel', ' level', '_level', 1024 ))
+		variables.push(buildVariables([], 'Override', ' name', '_label', 1024 ))
+		variables.push(buildVariables([], 'Override', ' state', '_state', 1024 ))
 	}
 	
 
-	// // set the input names
-	// const totalPresets = parseInt(self.connection.presets)
-	// for (let index = 0; index < totalInputs; index++) {
-	// 	variables.push({
-	// 		name: `Input ${index + 1} name`,
-	// 		variableId: `input_${index + 1}_label`
-	// 	})
-	// }
-	// // set the output names
-	// for (let index = 0; index < totalInputs; index++) {
-	// 	variables.push({
-	// 		name: `Output ${index + 1} name`,
-	// 		variableId: `output_${index + 1}_label`
-	// 	})
-	// }
-
-	// // set the HDCP info
-	// for (let index = 0; index < totalInputs; index++) {
-	// 	variables.push({
-	// 		name: `Input ${index + 1} HDCP`,
-	// 		variableId: `input_${index + 1}_hdcp`
-	// 	})
-	// }
-
 	self.setVariableDefinitions(variables)
 
-	if (self.device.connection === undefined) {
+	if (!isDeviceLoaded) {
+		// Set the default values
 		self.setVariableValues({
 			'processor_name': '',
 			'processor_number': '',
@@ -77,38 +68,31 @@ module.exports = async function (self) {
 			'rack_status': '',
 			'station_count': '',
 		})
+
 	} else {
+		// Set the values from the device
+		const { system, channels } = self.deviceInfo
 		self.setVariableValues({
-			'processor_name': self.device.system.processor_name,
-			'processor_number': self.device.system.processor_number,
-			'current_time': self.device.system.current_time,
-			'uptime': self.device.system.uptime,
-			'rack_status': self.device.system.rack_status,
-			'station_count': self.device.system.stations.length,
+			'processor_name': system?.processor_name,
+			'processor_number': system?.processor_number,
+			'current_time': system?.current_time,
+			'uptime': system?.uptime,
+			'rack_status': system?.rack_status,
+			'station_count': system?.stations.length,
 		})
 		let variableValues = {}
 		features.filter(each => each !== 'channels').forEach(each => {
-			variableValues = buildVariablesValues(self.device[each], variableValues, each, 'name', '_label')
-			variableValues = buildVariablesValues(self.device[each], variableValues, each, 'state', '_state')
+			variableValues = buildVariablesValues(self.deviceInfo[each], variableValues, each.slice(0, -1), 'name', '_label')
+			variableValues = buildVariablesValues(self.deviceInfo[each], variableValues, each.slice(0, -1), 'state', '_state')
 		})
-		variableValues = buildVariablesValues(self.device.channels, variableValues, 'channels', 'name', '_label')
-		variableValues = buildVariablesValues(self.device.channels, variableValues, 'channels', 'level', '_level')
+		variableValues = buildVariablesValues(channels, variableValues, 'channel', 'name', '_label')
+		variableValues = buildVariablesValues(channels, variableValues, 'channel', 'level', '_level')
 
 		self.setVariableValues(variableValues)
 	}
-
-	
-
-	// const inputVariables = {}
-	// for (let index = 0; index < totalInputs; index++) {
-	// 	inputVariables[`output_${index + 1}`] = ''
-	// 	inputVariables[`input_${index + 1}_label`] = `Input ${index + 1}`
-	// 	inputVariables[`output_${index + 1}_label`] = `Output ${index + 1}`
-	// }
-	// self.setVariableValues(inputVariables)
 }
 
-function buildVariables(info, feature, text = ' name', ending = '_label') {
+function buildVariables(info, feature, text = ' name', ending = '_label', count = 0) {
 	const variables = []
 	let total
 	if (Array.isArray(info)) {
@@ -116,17 +100,28 @@ function buildVariables(info, feature, text = ' name', ending = '_label') {
 	} else {
 		total = Object.keys(info).length
 	}
-	
-	for (let index = 0; index < total; index++) {
-		// variables.push({
-		// 	name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${index + 1}${text}`,
-		// 	variableId: `${feature}_${index + 1}${ending}`
-		// })
-		variables.push({
-			name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${info[index].id}${text}`,
-			variableId: `${feature}_${info[index].id}${ending}`
-		})
+
+	if (count) {
+		for (let index = 0; index < count; index++) {
+			variables.push({
+				name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${index + 1}${text}`,
+				variableId: `${feature}_${index}${ending}`
+			})
+		}
+	} else {
+		for (let index = 0; index < total; index++) {
+			// variables.push({
+			// 	name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${index + 1}${text}`,
+			// 	variableId: `${feature}_${index + 1}${ending}`
+			// })
+			variables.push({
+				name: `${feature.charAt(0).toUpperCase()}${feature.slice(1)} ${info[index].id}${text}`,
+				variableId: `${feature}_${info[index].id}${ending}`
+			})
+		}
 	}
+	
+	
 	return variables
 }
 

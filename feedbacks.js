@@ -16,7 +16,7 @@ module.exports = async function(self) {
 				{
 					type: 'dropdown',
 					label: 'Overrides',
-					id: 'overridesID',
+					id: 'overrideID',
 					default: '1',
 					choices: self.CHOICES_OVERRIDES,
 					minChoicesForSearch: 0
@@ -37,7 +37,7 @@ module.exports = async function(self) {
 			callback: (feedback) => {
 				// This callback will be called whenever companion wants to check if this feedback is 'active' and should affect the button style
 				try {
-					return self.getVariableValue(`overrides_${feedback.options.overridesID}_state`) == feedback.options.checkState
+					return self.getVariableValue(`override_${feedback.options.overrideID}_state`) == feedback.options.checkState
 				} catch (error) {
 					self.log('error', 'Feedback error: ' + error.message)
 					return false
@@ -56,7 +56,7 @@ module.exports = async function(self) {
 				{
 					type: 'dropdown',
 					label: 'Presets',
-					id: 'presetsID',
+					id: 'presetID',
 					default: '1',
 					choices: self.CHOICES_PRESETS,
 					minChoicesForSearch: 0
@@ -78,7 +78,7 @@ module.exports = async function(self) {
 			callback: (feedback) => {
 				// This callback will be called whenever companion wants to check if this feedback is 'active' and should affect the button style
 				try {
-					return self.getVariableValue(`presets_${feedback.options.presetsID}_state`) == feedback.options.checkState
+					return self.getVariableValue(`preset_${feedback.options.presetID}_state`) == feedback.options.checkState
 				} catch (error) {
 					self.log('error', 'Feedback error: ' + error.message)
 					return false
@@ -118,7 +118,7 @@ module.exports = async function(self) {
 			callback: (feedback) => {
 				// This callback will be called whenever companion wants to check if this feedback is 'active' and should affect the button style
 				try {
-					return self.getVariableValue(`walls_${feedback.options.wallID}_state`) == feedback.options.checkState
+					return self.getVariableValue(`wall_${feedback.options.wallID}_state`) == feedback.options.checkState
 				} catch (error) {
 					self.log('error', 'Feedback error: ' + error.message)
 					return false
@@ -159,7 +159,7 @@ module.exports = async function(self) {
 			callback: (feedback) => {
 				// This callback will be called whenever companion wants to check if this feedback is 'active' and should affect the button style
 				try {
-					return self.getVariableValue(`macros_${feedback.options.macroID}_state`) == feedback.options.checkState
+					return self.getVariableValue(`macro_${feedback.options.macroID}_state`) == feedback.options.checkState
 				} catch (error) {
 					self.log('error', 'Feedback error: ' + error.message)
 					return false
@@ -167,9 +167,9 @@ module.exports = async function(self) {
 			}
 		},
 		channelState: {
-			name: 'Channel State',
+			name: 'Channel Level',
 			type: 'boolean',
-			label: 'Check channel state.',
+			label: 'Check channel level.',
 			defaultStyle: {
 				bgcolor: combineRgb(255, 0, 0),
 				color: combineRgb(0, 0, 0)
@@ -178,7 +178,7 @@ module.exports = async function(self) {
 				{
 					type: 'dropdown',
 					label: 'Channels',
-					id: 'channelsID',
+					id: 'channelID',
 					default: '1',
 					choices: self.CHOICES_CHANNELS
 				},
@@ -198,7 +198,7 @@ module.exports = async function(self) {
 				{
 					type: 'number',
 					label: 'From 0 to 100',
-					id: 'wantedState',
+					id: 'checkState',
 					default: 0,
 					min: 0,
 					max: 100
@@ -208,13 +208,13 @@ module.exports = async function(self) {
 				// This callback will be called whenever companion wants to check if this feedback is 'active' and should affect the button style
 				try {
 					if (feedback.options.operation === '=') {
-						return self.getVariableValue(`channels_${feedback.options.channelsID}_state`) == feedback.options.checkState
+						return self.getVariableValue(`channel_${feedback.options.channelID}_level`) == feedback.options.checkState
 					} else if (feedback.options.operation === '!=') {
-						return self.getVariableValue(`channels_${feedback.options.channelsID}_state`) != feedback.options.checkState
+						return self.getVariableValue(`channel_${feedback.options.channelID}_level`) != feedback.options.checkState
 					} else if (feedback.options.operation === '>') {
-						return self.getVariableValue(`channels_${feedback.options.channelsID}_state`) > feedback.options.checkState
+						return self.getVariableValue(`channel_${feedback.options.channelID}_level`) > feedback.options.checkState
 					} else if (feedback.options.operation === '<') {
-						return self.getVariableValue(`channels_${feedback.options.channelsID}_state`) < feedback.options.checkState
+						return self.getVariableValue(`channel_${feedback.options.channelID}_level`) < feedback.options.checkState
 					}
 					return false
 				} catch (error) {

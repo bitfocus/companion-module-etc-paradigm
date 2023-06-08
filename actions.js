@@ -9,7 +9,7 @@ module.exports = function (self) {
 					{
 						type: 'dropdown',
 						label: 'Presets',
-						id: 'presetsID',
+						id: 'presetID',
 						default: '1',
 						choices: self.CHOICES_PRESETS,
 						minChoicesForSearch: 0
@@ -29,7 +29,7 @@ module.exports = function (self) {
 				],
 				callback: async (event) => {
 					try {
-						await self.device.runPresetAction(event.options.wantedState, event.options.presetsID)
+						await self.device.runPresetAction(event.options.wantedState, event.options.presetID)
 						//update the value
 						await self.getStates()
 					} catch (error) {
@@ -43,7 +43,7 @@ module.exports = function (self) {
 					{
 						type: 'dropdown',
 						label: 'Presets',
-						id: 'presetsID',
+						id: 'presetID',
 						default: '1',
 						choices: self.CHOICES_PRESETS,
 						minChoicesForSearch: 0
@@ -51,7 +51,7 @@ module.exports = function (self) {
 				],
 				callback: async (event) => {
 					try {
-						await self.device.runOverridesAction('record', event.options.presetsID)
+						await self.device.runOverridesAction('record', event.options.presetID)
 						await self.getStates()
 					} catch (error) {
 						self.log('error', error.message)
@@ -64,7 +64,7 @@ module.exports = function (self) {
 					{
 						type: 'dropdown',
 						label: 'Overrides',
-						id: 'overridesID',
+						id: 'overrideID',
 						default: '1',
 						choices: self.CHOICES_OVERRIDES,
 						minChoicesForSearch: 0
@@ -84,7 +84,7 @@ module.exports = function (self) {
 				],
 				callback: async (event) => {
 					try {
-						await self.device.runOverridesAction(event.options.wantedState, event.options.overridesID)
+						await self.device.runOverridesAction(event.options.wantedState, event.options.overrideID)
 						await self.getStates()
 					} catch (error) {
 						self.log('error', error.message)
@@ -125,7 +125,7 @@ module.exports = function (self) {
 				},
 			},
 			changeWallState: {
-				name: 'Toggle Wall State',
+				name: 'Change Wall State',
 				options: [
 					{
 						type: 'dropdown',
@@ -142,8 +142,8 @@ module.exports = function (self) {
 						default: '1',
 						tooltip: '',
 						choices: [
-							{ id: '1', label: 'Start' },
-							{ id: '0', label: 'Stop' },
+							{ id: '1', label: 'Open' },
+							{ id: '0', label: 'Close' },
 							{ id: 'toggle', label: 'Toggle' }
 						],
 						minChoicesForSearch: 0
@@ -152,7 +152,7 @@ module.exports = function (self) {
 				callback: async (event) => {
 					try {
 						// get current state
-						const currentState = self.getVariableValue(`walls_${feedback.options.wallID}_state`)
+						const currentState = self.getVariableValue(`wall_${feedback.options.wallID}_state`)
 						if (feedback.options.wantedState !== currentState || feedback.options.wantedState === 'toggle') {
 							await self.device.runWallAction('toggle', event.options.wallID)
 						}
@@ -169,7 +169,7 @@ module.exports = function (self) {
 					{
 						type: 'dropdown',
 						label: 'Sequences',
-						id: 'sequencesID',
+						id: 'sequenceID',
 						default: '1',
 						choices: self.CHOICES_SEQUENCES
 					},
@@ -190,7 +190,7 @@ module.exports = function (self) {
 				],
 				callback: async (event) => {
 					try {
-						await self.device.runSequencesAction(event.options.wantedState, event.options.sequencesID)
+						await self.device.runSequencesAction(event.options.wantedState, event.options.sequenceID)
 						await self.getStates()
 					} catch (error) {
 						self.log('error', error.message)
@@ -203,7 +203,7 @@ module.exports = function (self) {
 					{
 						type: 'dropdown',
 						label: 'Channels',
-						id: 'channelsID',
+						id: 'channelID',
 						default: '1',
 						choices: self.CHOICES_CHANNELS
 					},
@@ -219,7 +219,7 @@ module.exports = function (self) {
 				],
 				callback: async (event) => {
 					try {
-						await self.device.runChannelsAction('set_level', event.options.channelsID, event.options.wantedState)
+						await self.device.runChannelsAction('set_level', event.options.channelID, event.options.wantedState)
 						await self.getStates()
 					} catch (error) {
 						self.log('error', error.message)
@@ -232,7 +232,7 @@ module.exports = function (self) {
 					{
 						type: 'dropdown',
 						label: 'Channels',
-						id: 'channelsID',
+						id: 'channelID',
 						default: '1',
 						tooltip: '',
 						choices: self.CHOICES_CHANNELS
@@ -250,7 +250,7 @@ module.exports = function (self) {
 				callback: async (event) => {
 					try {
 						// get the current state and add the level to it
-						const variableID = `channels_${event.options.channels}_level`
+						const variableID = `channel_${event.options.channels}_level`
 						const currentValue = await self.getVariableValue(variableID)
 
 						const newValue = clamp(currentValue + event.options.wantedState, 0, 100)
@@ -260,7 +260,7 @@ module.exports = function (self) {
 						returnVariable[variableID] = newValue
 						self.setVariableValues(returnVariable)
 
-						await self.device.runChannelsAction('set_level', event.options.channelsID, newValue)
+						await self.device.runChannelsAction('set_level', event.options.channelID, newValue)
 					} catch (error) {
 						self.log('error', error.message)
 					}

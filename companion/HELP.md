@@ -2,6 +2,9 @@
 
 A module for controlling ETC-Paradigm Architectual Control Systems.
 
+** Connection **
+This module needs to be run from a computer on the same network as the Paradigm system.
+
 **Available Commands**
 
 * Set Channel Level
@@ -9,10 +12,11 @@ A module for controlling ETC-Paradigm Architectual Control Systems.
 * Run Macro
 * Activate/Deactivate Preset
 * Record Preset
-* Toggle Walls
+* Open, Close, Toggle Walls
 * Start, Stop, Pause, Resume Sequences
 * Activate/Deactivate Overrides
 
+**Available Feedbacks**
 
 **Notice**
 
