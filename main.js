@@ -50,8 +50,13 @@ class ModuleInstance extends InstanceBase {
 			// Start polling
 			this.subscribeToDevice()
 		} catch (error) {
-			this.updateStatus('error', error.message)
-			this.log('error', 'Network error: ' + error.message)
+			if (error.message === 'This operation was aborted') {
+				this.updateStatus(InstanceStatus.Disconnected)
+			} else {
+				this.updateStatus('error', error.message)
+				this.log('error', 'Network error: ' + error.message)
+			}
+			
 			this.device = undefined
 			this.deviceInfo = {}
 			this.unsubscribeToDevice()

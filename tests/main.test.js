@@ -1725,6 +1725,30 @@ describe.only('ModuleInstance', () => {
 			expect(instance.deviceInfo).toEqual({})
 			expect(instance.unsubscribeToDevice).toHaveBeenCalled()
 		})
+
+        test('should handle error and update status when timeout happens', async () => {
+			// Mock the necessary methods and properties
+			instance.config = { host: '127.0.0.1' }
+			instance.updateStatus = jest.fn()
+			instance.log = jest.fn()
+			instance.device = null
+            instance.unsubscribeToDevice = jest.fn()
+
+			// Mock the error
+			const mockError = new Error('This operation was aborted')
+			Paradigm.mockImplementationOnce(() => {
+				throw mockError
+			})
+
+			// Invoke the method
+			await instance.initDevice()
+
+			// Assertions
+			expect(instance.updateStatus).toHaveBeenCalledWith(InstanceStatus.Disconnected)
+			expect(instance.device).toBeUndefined()
+			expect(instance.deviceInfo).toEqual({})
+			expect(instance.unsubscribeToDevice).toHaveBeenCalled()
+		})
 	})
 
 	describe('destroy', () => {
