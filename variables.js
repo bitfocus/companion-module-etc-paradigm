@@ -55,7 +55,6 @@ module.exports = async function (self) {
 		variables.push(buildVariables([], 'Override', ' state', '_state', 1024 ))
 	}
 	
-
 	self.setVariableDefinitions(variables)
 
 	if (!isDeviceLoaded) {
@@ -72,15 +71,15 @@ module.exports = async function (self) {
 	} else {
 		// Set the values from the device
 		const { system, channels } = self.deviceInfo
-		self.setVariableValues({
+		let variableValues = {
 			'processor_name': system?.processor_name,
 			'processor_number': system?.processor_number,
 			'current_time': system?.current_time,
 			'uptime': system?.uptime,
 			'rack_status': system?.rack_status,
 			'station_count': system?.stations.length,
-		})
-		let variableValues = {}
+		}
+
 		features.filter(each => each !== 'channels').forEach(each => {
 			variableValues = buildVariablesValues(self.deviceInfo[each], variableValues, each.slice(0, -1), 'name', '_label')
 			variableValues = buildVariablesValues(self.deviceInfo[each], variableValues, each.slice(0, -1), 'state', '_state')
@@ -92,33 +91,38 @@ module.exports = async function (self) {
 	}
 }
 
-function buildVariables(info, feature, text = ' name', ending = '_label', count = 0) {
+function buildVariables(info, feature, text = ' name', ending = '_label', specificCount = 0) {
 	const variables = []
 	let total
-	if (Array.isArray(info)) {
-		total = info.length
-	} else {
-		total = Object.keys(info).length
-	}
 
-	if (count) {
-		for (let index = 0; index < count; index++) {
+	if (specificCount) {
+		for (let index = 0; index < specificCount; index++) {
 			variables.push({
 				name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${index + 1}${text}`,
 				variableId: `${feature}_${index}${ending}`
 			})
 		}
 	} else {
-		for (let index = 0; index < total; index++) {
-			// variables.push({
-			// 	name: `${feature.charAt(0).toUpperCase() + feature.slice(1)} ${index + 1}${text}`,
-			// 	variableId: `${feature}_${index + 1}${ending}`
-			// })
-			variables.push({
-				name: `${feature.charAt(0).toUpperCase()}${feature.slice(1)} ${info[index].id}${text}`,
-				variableId: `${feature}_${info[index].id}${ending}`
-			})
+
+		if (Array.isArray(info)) {
+			total = info.length
+			for (let index = 0; index < total; index++) {
+				variables.push({
+					name: `${feature.charAt(0).toUpperCase()}${feature.slice(1)} ${info[index].id + 1}${text}`,
+					variableId: `${feature}_${info[index].id}${ending}`
+				})
+			}
+		} else {
+			total = Object.keys(info).length
+			const keys = Object.keys(info)
+			for (let index = 0; index < total; index++) {
+				variables.push({
+					name: `${feature.charAt(0).toUpperCase()}${feature.slice(1)} ${parseInt(keys[index], 10) + 1}${text}`,
+					variableId: `${feature}_${parseInt(keys[index], 10)}${ending}`
+				})
+			}
 		}
+		
 	}
 	
 	
@@ -130,12 +134,21 @@ function buildVariablesValues(info, variables, feature, text = 'name', ending = 
 	let total
 	if (Array.isArray(info)) {
 		total = info.length
+
+		for (let index = 0; index < total; index++) {
+			variables[`${feature}_${info[index].id}${ending}`] = info[index][text]
+		}
 	} else {
 		total = Object.keys(info).length
+		const keys = Object.keys(info)
+
+		for (let index = 0; index < total; index++) {
+			variables[`${feature}_${parseInt(keys[index], 10)}${ending}`] = info[keys[index]]
+		}
 	}
-	for (let index = 0; index < total; index++) {
-		// variables[`${feature}_${index + 1}${ending}`] = info[index][text]
-		variables[`${feature}_${info[index].id}${ending}`] = info[index][text]
-	}
+	
 	return variables
 }
+
+module.exports.buildVariables = buildVariables;
+module.exports.buildVariablesValues = buildVariablesValues;

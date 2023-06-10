@@ -51,7 +51,7 @@ module.exports = function (self) {
 				],
 				callback: async (event) => {
 					try {
-						await self.device.runOverridesAction('record', event.options.presetID)
+						await self.device.runPresetAction('record', event.options.presetID)
 						await self.getStates()
 					} catch (error) {
 						self.log('error', error.message)
@@ -117,8 +117,12 @@ module.exports = function (self) {
 				],
 				callback: async (event) => {
 					try {
-						await self.device.runMacroAction(event.options.wantedState, event.options.macroID)
-						await self.getStates()
+						const result = await self.device.runMacroAction(event.options.wantedState, event.options.macroID)
+						// set the macro variable state // this is the only one that gets a state returned with it
+						const variableID = `macro_${event.options.macroID}_state`
+						const returnVariable = {}
+						returnVariable[variableID] = result.state
+						self.setVariableValues(returnVariable)
 					} catch (error) {
 						self.log('error', error.message)
 					}
@@ -152,8 +156,8 @@ module.exports = function (self) {
 				callback: async (event) => {
 					try {
 						// get current state
-						const currentState = self.getVariableValue(`wall_${feedback.options.wallID}_state`)
-						if (feedback.options.wantedState !== currentState || feedback.options.wantedState === 'toggle') {
+						const currentState = self.getVariableValue(`wall_${event.options.wallID}_state`)
+						if (event.options.wantedState != currentState || event.options.wantedState === 'toggle') {
 							await self.device.runWallAction('toggle', event.options.wallID)
 						}
 						
@@ -250,8 +254,8 @@ module.exports = function (self) {
 				callback: async (event) => {
 					try {
 						// get the current state and add the level to it
-						const variableID = `channel_${event.options.channels}_level`
-						const currentValue = await self.getVariableValue(variableID)
+						const variableID = `channel_${event.options.channelID}_level`
+						const currentValue = self.getVariableValue(variableID)
 
 						const newValue = clamp(currentValue + event.options.wantedState, 0, 100)
 
@@ -273,3 +277,5 @@ module.exports = function (self) {
 function clamp(value, min, max) {
 	return Math.min(Math.max(value, min), max);
   }
+
+  module.exports.clamp = clamp;

@@ -152,10 +152,10 @@ class ModuleInstance extends InstanceBase {
 
 		if (isDeviceLoaded) {
 			this.CHOICES_MACROS = this.buildChoices(this.deviceInfo.macros)
-			this.CHOICES_PRESETS = this.buildChoices(this.deviceInfo.presets)
+			this.CHOICES_PRESETS = this.buildChoicesWithSpaces(this.deviceInfo.presets, this.deviceInfo.spaces)
 			this.CHOICES_WALLS = this.buildChoices(this.deviceInfo.walls)
 			this.CHOICES_SEQUENCES = this.buildChoices(this.deviceInfo.sequences)
-			this.CHOICES_CHANNELS = this.buildChannelChoicesWithSpaces(this.deviceInfo.channels, this.deviceInfo.spaces)
+			this.CHOICES_CHANNELS = this.buildChoicesWithSpaces(this.deviceInfo.channels, this.deviceInfo.spaces)
 			this.CHOICES_OVERRIDES = this.buildChoices(this.deviceInfo.overrides)
 		} else {
 			this.CHOICES_MACROS = this.buildChoices([], 'Macro', 1024 )
@@ -190,7 +190,7 @@ class ModuleInstance extends InstanceBase {
 		} else {
 			for (let index = 0; index < total; index++) {
 				variables.push({
-					id: `${index + 1}`,
+					id: `${index}`,
 					label: `${feature} ${index + 1}`,
 				})
 			}
@@ -200,35 +200,16 @@ class ModuleInstance extends InstanceBase {
 		return variables
 	}
 
-	buildChannelChoicesWithSpaces(info, spaces, feature = '', count = 0) {
+	buildChannelChoicesWithSpaces(info, spaces) {
 		const variables = []
-		let total
-		if (Array.isArray(info)) {
-			total = info.length
-		} else {
-			total = Object.keys(info).length
-		}
+		let total = info.length
 
-		if (count) {
-			total = count
+		for (let index = 0; index < total; index++) {
+			variables.push({
+				id: `${info[index].id}`,
+				label: `${spaces[info[index].space]}: ${info[index].name}`,
+			})
 		}
-
-		if (feature === '') {
-			for (let index = 0; index < total; index++) {
-				variables.push({
-					id: `${info[index].id}`,
-					label: `${spaces[info[index].space]}: ${info[index].name}`,
-				})
-			}
-		} else {
-			for (let index = 0; index < total; index++) {
-				variables.push({
-					id: `${index + 1}`,
-					label: `${feature} ${index + 1}`,
-				})
-			}
-		}
-		
 		
 		return variables
 	}

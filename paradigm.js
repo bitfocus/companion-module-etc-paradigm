@@ -9,44 +9,41 @@ class Paradigm {
 		this.overridesActions = ['activate_override', 'deactivate_override']
 		this.sequencesActions = ['start_sequence', 'stop_sequence', 'pause_sequence', 'resume_sequence']
 		this.features = ['system', 'macros', 'presets', 'sequences', 'channels', 'walls', 'overrides', 'spaces']
-        this.connectionTimeout = 500
+		this.connectionTimeout = 500
+	}
+
+	async sendRequest(url) {
+		const controller = new AbortController()
+		const timeoutId = setTimeout(() => controller.abort(), this.connectionTimeout)
+		const options = { signal: controller.signal }
+
+		try {
+			const response = await fetch(url, options)
+			if (response.status === 200) {
+				const result = await response.text()
+				const filtered = this.fixInvalidJSON(result).replace(/,(?=[\]}])/g, '')
+				return JSON.parse(filtered)
+			} else {
+				throw new Error(`Error trying to send request: ${url}`)
+			}
+		} catch (error) {
+			throw error
+		}
 	}
 
 	async getInfo(info) {
 		const url = `${this.url}/get/${info}`
-		
-		let response
-
-        const controller = new AbortController()
-
-        const timeoutId = setTimeout(() => controller.abort(), this.connectionTimeout)
-        const options = {
-            signal: controller.signal
-        }
-		try {
-			response = await fetch(url, options)
-			if (response.status === 200) {
-				const result = await response.text()
-				// the server responds with invalid JSON we must remove trailing commas
-				const filtered = result.replace(/,(?=[\]}])/g, '')
-				return JSON.parse(filtered)
-			} else {
-				throw new Error(`Error trying to get ${info}.`)
-			}
-		} catch (error) {
-			console.log(error)
-			throw error
-		}
+		return this.sendRequest(url)
 	}
 
 	async getAllInfo() {
 		const allFeatures = this.features.map((feature) => this.getInfo(feature))
 		const result = await Promise.all(allFeatures)
-        const returnInfo = {}
-        result.forEach((each, index) => {
-            returnInfo[this.features[index]] = each
-        })
-        return returnInfo
+		const returnInfo = {}
+		result.forEach((each, index) => {
+			returnInfo[this.features[index]] = each
+		})
+		return returnInfo
 	}
 
 	fixInvalidJSON(jsonStr) {
@@ -57,47 +54,19 @@ class Paradigm {
 
 	async getControlStatus() {
 		const url = `${this.url}/get/control_status`
-		const options = {}
-		let response
-
-		try {
-			response = await fetch(url, options)
-			if (response.status === 200) {
-				const result = await response.text()
-				const filtered = this.fixInvalidJSON(result).replace(/,(?=[\]}])/g, '')
-				console.log('json:', filtered)
-				return JSON.parse(filtered)
-			} else {
-				throw new Error('Error trying to get the control status.')
-			}
-		} catch (error) {
-			console.log(error)
-			throw error
-		}
+		return this.sendRequest(url)
 	}
 
 	async runAction(feature, action, id, other = []) {
-		const queryParams = new URLSearchParams('')
-		queryParams.set('id', id)
-
+		const queryParams = new URLSearchParams({ id })
 		other.forEach((each) => queryParams.append(each.name, each.value))
-		const url = `${this.url}/do/${action}?${queryParams.toString()}`
-		const options = {}
-		let response
+		const url = new URL(`/do/${action}`, this.url)
+		url.search = queryParams.toString()
 
 		try {
-			response = await fetch(url, options)
-			if (response.status === 200) {
-				const result = await response.text()
-				// the server responds with invalid JSON we must remove trailing commas
-				const filtered = result.replace(/,(?=[\]}])/g, '')
-				return JSON.parse(filtered)
-			} else {
-				throw new Error('Error trying to run the action.')
-			}
+			return await this.sendRequest(url.toString())
 		} catch (error) {
-			console.log(error)
-			throw error
+			throw new Error(`Error trying to run action: ${action}`)
 		}
 	}
 
@@ -193,13 +162,6 @@ class Paradigm {
 			return false
 		}
 		return this.runAction('sequences', action, id)
-	}
-
-	close() {
-		if (this.connection) {
-			this.connection.close()
-			this.connection = undefined
-		}
 	}
 }
 
