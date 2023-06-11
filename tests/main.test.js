@@ -2093,7 +2093,7 @@ describe.only('ModuleInstance', () => {
 			}
 			const feature = ''
 
-			const result = instance.buildChannelChoicesWithSpaces(info, spaces, feature)
+			const result = instance.buildChoicesWithSpaces(info, spaces, feature)
 
 			expect(result).toEqual([
 				{ id: "0", label: 'Space 1: Channel 1' },

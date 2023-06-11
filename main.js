@@ -205,7 +205,7 @@ class ModuleInstance extends InstanceBase {
 		return variables
 	}
 
-	buildChannelChoicesWithSpaces(info, spaces) {
+	buildChoicesWithSpaces(info, spaces) {
 		const variables = []
 		let total = info.length
 

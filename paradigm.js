@@ -21,7 +21,7 @@ class Paradigm {
 			const response = await fetch(url, options)
 			if (response.status === 200) {
 				const result = await response.text()
-				const filtered = this.fixInvalidJSON(result).replace(/,(?=[\]}])/g, '')
+				const filtered = this.fixInvalidJSON(result)
 				return JSON.parse(filtered)
 			} else {
 				throw new Error(`Error trying to send request: ${url}`)
@@ -47,9 +47,9 @@ class Paradigm {
 	}
 
 	fixInvalidJSON(jsonStr) {
-		const regex = /(['"])?([a-zA-Z0-9_]+)(['"])?:/g
-		const fixedJSON = jsonStr.replace(regex, '"$2":')
-		return fixedJSON
+        jsonStr = jsonStr.replace(/([{,])(\s*)([A-Za-z0-9_\-]+?)\s*:/g, '$1"$3":')
+        jsonStr = jsonStr.replace(/,(?=[\]}])/g, '')
+        return jsonStr
 	}
 
 	async getControlStatus() {
