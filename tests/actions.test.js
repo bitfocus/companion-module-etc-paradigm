@@ -58,6 +58,29 @@ describe('Module Tests', () => {
     expect(self.setActionDefinitions).toHaveBeenCalled()
   });
 
+  it('should not have an empty tooltip.', async () => {
+
+    // await actions(self);
+    await actions(self)
+    const moduleActions = self.setActionDefinitions.mock.calls[0][0]
+
+    // make sure each one doesn't have an empty tooltip
+    for (const key in moduleActions) {
+      if (Object.hasOwnProperty.call(moduleActions, key)) {
+        const element = moduleActions[key];
+
+        // go through all the options
+        element.options.forEach(each => {
+          if (each.tooltip !== undefined) {
+            expect(each.tooltip.length).toBeGreaterThan(0)
+          } else {
+            expect(each.tooltip).toBeUndefined()
+          }
+        })
+      }
+    }
+  });
+
   it('should activate/deactivate a preset', async () => {
     const event = {
       options: {

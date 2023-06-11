@@ -26,7 +26,6 @@ module.exports = async function(self) {
 					label: 'Activated or Deactivated',
 					id: 'checkState',
 					default: true,
-					tooltip: '',
 					choices: [
 						{ id: true, label: 'Activated' },
 						{ id: false, label: 'Deactivated' }
@@ -66,7 +65,6 @@ module.exports = async function(self) {
 					label: 'State',
 					id: 'checkState',
 					default: 'Activated',
-					tooltip: '',
 					choices: [
 						{ id: 'Activated', label: 'Activated' },
 						{ id: 'Deactivated', label: 'Deactivated' },
@@ -107,7 +105,6 @@ module.exports = async function(self) {
 					label: 'Open or Closed',
 					id: 'checkState',
 					default: 1,
-					tooltip: '',
 					choices: [
 						{ id: 1, label: 'Open' },
 						{ id: 0, label: 'Closed' }
@@ -146,7 +143,6 @@ module.exports = async function(self) {
 					label: 'Macro State',
 					id: 'checkState',
 					default: 0,
-					tooltip: '',
 					choices: [
 						{ id: 0, label: 'Off' },
 						{ id: 1, label: 'On' },

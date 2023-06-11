@@ -16,10 +16,9 @@ module.exports = function (self) {
 					},
 					{
 						type: 'dropdown',
-						label: 'Activate or Deactivate',
+						label: 'Activate or Deactivate2',
 						id: 'wantedState',
 						default: 'activate',
-						tooltip: '',
 						choices: [
 							{ id: 'activate', label: 'Activate' },
 							{ id: 'deactivate', label: 'Deactivate' }
@@ -74,7 +73,6 @@ module.exports = function (self) {
 						label: 'Activate or Deactivate',
 						id: 'wantedState',
 						default: 'activate',
-						tooltip: '',
 						choices: [
 							{ id: 'activate', label: 'Activate' },
 							{ id: 'deactivate', label: 'Deactivate' }
@@ -106,7 +104,6 @@ module.exports = function (self) {
 						label: 'ON/OFF/Cancel',
 						id: 'wantedState',
 						default: 'on',
-						tooltip: '',
 						choices: [
 							{ id: 'on', label: 'ON' },
 							{ id: 'off', label: 'OFF' },
@@ -144,7 +141,6 @@ module.exports = function (self) {
 						label: 'Action',
 						id: 'wantedState',
 						default: '1',
-						tooltip: '',
 						choices: [
 							{ id: '1', label: 'Open' },
 							{ id: '0', label: 'Close' },
@@ -182,7 +178,6 @@ module.exports = function (self) {
 						label: 'Action',
 						id: 'wantedState',
 						default: 'start',
-						tooltip: '',
 						choices: [
 							{ id: 'start', label: 'Start' },
 							{ id: 'stop', label: 'Stop' },
@@ -216,7 +211,6 @@ module.exports = function (self) {
 						label: 'Level from 0-100%',
 						id: 'wantedState',
 						default: 0,
-						tooltip: '',
 						min: 0,
 						max: 100
 					}
@@ -238,7 +232,6 @@ module.exports = function (self) {
 						label: 'Channels',
 						id: 'channelID',
 						default: '1',
-						tooltip: '',
 						choices: self.CHOICES_CHANNELS
 					},
 					{

@@ -43,6 +43,28 @@ describe('Module Tests', () => {
     expect(self.setFeedbackDefinitions).toHaveBeenCalled()
   });
 
+  it('should not have an empty tooltip.', async () => {
+
+    await feedbacks(self)
+    const moduleFeedbacks = self.setFeedbackDefinitions.mock.calls[0][0]
+
+    // make sure each one doesn't have an empty tooltip
+    for (const key in moduleFeedbacks) {
+      if (Object.hasOwnProperty.call(moduleFeedbacks, key)) {
+        const element = moduleFeedbacks[key];
+
+        // go through all the options
+        element.options.forEach(each => {
+          if (each.tooltip !== undefined) {
+            expect(each.tooltip.length).toBeGreaterThan(0)
+          } else {
+            expect(each.tooltip).toBeUndefined()
+          }
+        })
+      }
+    }
+  });
+
   it('should check override state', async () => {
     const feedback = {
       options: {
