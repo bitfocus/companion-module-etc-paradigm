@@ -1,28 +1,13 @@
 {
 	"name": "etc-paradigm",
-	"version": "1.0.3",
-	"api_version": "1.0.0",
-	"manufacturer": "ETC",
-	"product": "ETC-Paradigm",
-	"shortname": "paradigm",
-	"description": "Control ETC-Paradigm Architectual Control System.",
-	"keywords": [
-		"Hardware",
-		"ETC",
-		"Lighting"
-	],
+	"version": "1.0.4",
 	"main": "main.js",
 	"scripts": {
 		"test": "jest"
 	},
-	"author": "zerbzman <zerbzman@gmail.com>",
 	"license": "MIT",
 	"dependencies": {
 		"@companion-module/base": "~1.1.1"
-	},
-	"homepage": "https://github.com/bitfocus/companion-module-etc-paradigm#readme",
-	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-etc-paradigm/issues"
 	},
 	"repository": {
 		"type": "git",
