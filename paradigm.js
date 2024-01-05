@@ -49,6 +49,7 @@ class Paradigm {
 	fixInvalidJSON(jsonStr) {
         jsonStr = jsonStr.replace(/([{,])(\s*)([A-Za-z0-9_\-]+?)\s*:/g, '$1"$3":')
         jsonStr = jsonStr.replace(/,(?=[\]}])/g, '')
+		jsonStr = jsonStr.replace(/\\\n/g, ' ')
         return jsonStr
 	}
 
