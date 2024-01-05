@@ -2,7 +2,7 @@
 	"id": "companion-module-etc-paradigm",
 	"name": "etc-paradigm",
 	"shortname": "paradigm",
-	"description": "Control ETC-Paradigm Architectual Control System.",
+	"description": "Control ETC-Paradigm Architectural Control System.",
 	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-etc-paradigm.git",
