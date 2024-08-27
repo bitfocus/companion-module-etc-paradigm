@@ -1,5 +1,5 @@
 {
-	"id": "companion-module-etc-paradigm",
+	"id": "etc-paradigm",
 	"name": "etc-paradigm",
 	"shortname": "paradigm",
 	"description": "Control ETC-Paradigm Architectural Control System.",
@@ -19,7 +19,7 @@
 		"apiVersion": "0.0.0",
 		"entrypoint": "../main.js"
 	},
-	"legacyIds": [],
+	"legacyIds": ["companion-module-etc-paradigm"],
 	"manufacturer": "ETC",
 	"products": ["Paradigm"],
 	"keywords": [
