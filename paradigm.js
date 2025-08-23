@@ -9,7 +9,7 @@ class Paradigm {
 		this.overridesActions = ['activate_override', 'deactivate_override']
 		this.sequencesActions = ['start_sequence', 'stop_sequence', 'pause_sequence', 'resume_sequence']
 		this.features = ['system', 'macros', 'presets', 'sequences', 'channels', 'walls', 'overrides', 'spaces']
-		this.connectionTimeout = 500
+		this.connectionTimeout = 5000
 	}
 
 	async sendRequest(url) {
@@ -29,6 +29,10 @@ class Paradigm {
 		} catch (error) {
 			throw error
 		}
+	}
+
+	destroy() {
+		//not implemented
 	}
 
 	async getInfo(info) {

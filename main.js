@@ -5,9 +5,6 @@ const UpdateFeedbacks = require('./feedbacks')
 const UpdateVariableDefinitions = require('./variables')
 const Paradigm = require('./paradigm')
 
-const http = require('http')
-const querystring = require('querystring')
-
 class ModuleInstance extends InstanceBase {
 	constructor(internal) {
 		super(internal)
@@ -70,7 +67,10 @@ class ModuleInstance extends InstanceBase {
 
 			this.poll = setTimeout(() => this.subscribeToDevice(), this.config.pollFrequency);
 		} catch (error) {
+			console.error('Subscription error:', error)
+			this.log('error', 'Subscription error: ' + error.stack)
 			this.updateStatus('error', error.message)
+			this.destroy()
 		}
 	}
 
@@ -81,6 +81,7 @@ class ModuleInstance extends InstanceBase {
 	// When module gets deleted
 	async destroy() {
 		this.unsubscribeToDevice()
+		this.device.destroy()
 		this.device = undefined
 		this.deviceInfo = {}
 
