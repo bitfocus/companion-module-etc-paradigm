@@ -80,6 +80,10 @@ class Paradigm extends EventEmitter {
 			if (this.buffer.startsWith('\n')) this.buffer = this.buffer.slice(1)
 			if (!line.length) continue
 			this.emit('raw', line)
+			if (/^error\b/i.test(line)) {
+				this.emit('psapError', line)
+				continue
+			}
 			const parsed = Paradigm._parseReply(line)
 			if (parsed) this.emit('reply', parsed)
 		}
@@ -104,7 +108,7 @@ class Paradigm extends EventEmitter {
 		const head = m[1].toLowerCase()
 		const rest = m[2]
 
-		if (head === 'macro' || head === 'macroon' || head === 'macrooff' || head === 'macrorunning') {
+		if (head === 'macro') {
 			// "Macro on macroname", "Macro off macroname", "Macro running macroname"
 			const sub = rest.match(/^(on|off|running)\s+(.+)$/i)
 			if (!sub) return null

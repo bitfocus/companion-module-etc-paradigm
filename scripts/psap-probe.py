@@ -1,17 +1,29 @@
 #!/usr/bin/env python3
 """
-PSAP probe — send a few UDP commands to a Paradigm processor and print whatever
-comes back. Usage:
+PSAP probe — send a handful of UDP commands to a Paradigm processor and print
+whatever comes back. Useful for verifying that PSAP is enabled and that nothing
+between you and the processor is dropping inbound UDP.
 
-    python3 scripts/psap-probe.py [host] [port]
+Usage:
 
-Defaults: host=10.101.3.101, port=4703.
+    python3 scripts/psap-probe.py <host> [port]
+
+Examples:
+
+    python3 scripts/psap-probe.py 10.0.0.42
+    python3 scripts/psap-probe.py paradigm.local 4703
+
+Port defaults to 4703 (ETC's recommended PSAP port).
 """
 import socket
 import sys
 import time
 
-HOST = sys.argv[1] if len(sys.argv) > 1 else "10.101.3.101"
+if len(sys.argv) < 2:
+    print(__doc__)
+    sys.exit(1)
+
+HOST = sys.argv[1]
 PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 4703
 
 COMMANDS = [

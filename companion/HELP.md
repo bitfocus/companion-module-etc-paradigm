@@ -2,7 +2,7 @@
 
 A Companion module for controlling ETC Paradigm Architectural Control Systems via the **Paradigm Serial Access Protocol (PSAP)** over UDP.
 
-> **Supports Paradigm Serial Access Protocol v5.x and v6.x.** Earlier firmware that only exposed the legacy HTTP/JSON web interface is no longer supported by this version of the module — pin to module v1.0.7 if you still need that.
+> **Supports Paradigm Serial Access Protocol v5.x and v6.x.** Earlier firmware that only exposed the legacy HTTP/JSON web interface is no longer supported — pin to module v1.0.7 if you still need that.
 
 ## Prerequisites — configure PSAP in LightDesigner
 
@@ -20,7 +20,7 @@ Without this step the module will sit idle — Paradigm silently ignores UDP tra
 
 | Field | Notes |
 | --- | --- |
-| **Paradigm Processor IP** | The processor's IP address. |
+| **Paradigm Processor IP / Hostname** | IPv4 address or DNS name reachable from this Companion host. |
 | **PSAP UDP Port** | Match the **Input UDP Port** set in LightDesigner. Default `4703`. |
 | **End of Message** | `CR` (default), `CR + LF`, or `LF` — must match LightDesigner. |
 | **Polling Interval (ms)** | How often each watched object is queried for status. Default `5000`. |
@@ -34,23 +34,44 @@ PSAP has no enumeration command, so you tell the module which objects you care a
 type Name [@ Space]
 ```
 
-Type tokens: `pst` (preset), `macro`, `chan` (channel), `wall`, `seq` (sequence), `ovr` (override), `grp` (group). Append `:htp` to a preset to query HTP state: `pst:htp Preset 1`.
+| Token | Meaning |
+| --- | --- |
+| `pst` | Preset (append `:htp` to query HTP state, e.g. `pst:htp Some Preset`) |
+| `macro` | Macro |
+| `chan` | Channel |
+| `wall` | Wall |
+| `seq` | Sequence |
+| `ovr` | Override |
+| `grp` | Group |
 
-Names are **case-sensitive** and must match LightDesigner exactly. Avoid commas and colons in object names — PSAP uses both as delimiters.
+**Space is optional.** Omit it and Paradigm will resolve the object wherever it lives; the module records the reply against the bare name. Include `@ Space` only when you have two objects with the same name in different spaces.
 
-Example:
+**Naming rules:**
+- Names are matched **case-insensitively here**, but PSAP itself is case-sensitive — type the name exactly as it appears in LightDesigner.
+- Avoid commas and colons in object names — PSAP uses both as delimiters.
+- If an object name contains `@`, watch it without the `@ Space` suffix (the `@` would otherwise be parsed as the separator).
+- Lines starting with `#` are treated as comments.
+
+**Example:**
 
 ```
+# Houselights
 pst Houselight 1 -100%
-pst Houselight 3 -OFF @ Primary Space 1
+pst Houselight 3 -OFF
+pst Houselight 5 -Show
+
+# Macros + a channel
 macro Macro 1
-chan Dimmer 2 @ Primary Space 1
-wall Wall 1
-seq Sequence 1
-ovr Override 1
+chan Dimmer 2
+
+# Same preset name in two spaces — disambiguate with @
+pst Walk-in @ KO Houselights
+pst Walk-in @ Foyer
 ```
 
 ## Actions
+
+All actions are **fire-and-forget** — the command is sent but the reply (success or PSAP error) is only visible via the connection log. State updates surface through polling, so a buttonpress that should change something will show up as a variable change on the next poll tick.
 
 | Action | PSAP equivalent |
 | --- | --- |
@@ -70,7 +91,7 @@ All text fields support Companion variables.
 
 ## Feedbacks & Variables
 
-Every line in **Watched Objects** creates a Companion variable that updates from the processor's polled status. Feedback dropdowns are populated from that list — so add an object to Watched Objects first, then reference it in a feedback.
+Every line in **Watched Objects** creates a Companion variable that updates from the processor's polled status. Feedback dropdowns are populated from that list — add an object to Watched Objects first, then reference it in a feedback.
 
 | Feedback | Compares against |
 | --- | --- |
@@ -81,8 +102,39 @@ Every line in **Watched Objects** creates a Companion variable that updates from
 | Override State | `enab` / `disab` |
 | Channel Level Comparison | `=`, `!=`, `>`, `>=`, `<`, `<=` against a level in PSAP units (0–255) |
 
+> **Note on channel comparisons:** actions accept 0–100% for ergonomics, but Paradigm returns levels in raw 0–255 PSAP units, and the feedback compares in those units. `255` is full, `128` is roughly half.
+
 ## Troubleshooting
 
-- **`Unexpected token < in JSON …`** — you're on the legacy v1.x of this module against a v4+ processor. Upgrade.
-- **No status updates** — confirm PSAP is enabled in LightDesigner and the Input UDP Port matches. From the Companion host: `printf 'help\r' | nc -u -w1 <ip> 4703`. You should see a list of commands come back.
-- **Action fires but nothing happens** — check the object name's spelling and case. Send `macro get YourMacro` via the Raw Command action and watch the log for a reply.
+### "Unexpected token < in JSON" on the very first version
+
+You're on legacy module v1.x against v4+ firmware. Upgrade to v2.x.
+
+### Commands send but state never updates
+
+This is almost always one of:
+
+1. **PSAP isn't enabled or the port mismatches.** In LightDesigner check that the processor's **Input UDP Port** is what you put in Companion, and **Input Handler** is `PSAP 5.0.0` or higher.
+
+2. **A firewall is dropping inbound UDP to Companion.** On macOS, check **System Settings → Network → Firewall**. If on, either turn off temporarily to verify, or under **Options…** allow incoming connections for the Companion process. On Windows, check Defender Firewall's inbound rules for Companion.
+
+3. **The processor isn't sending replies.** Confirm from outside Companion by running the bundled probe:
+
+   ```
+   python3 scripts/psap-probe.py <paradigm-ip> [port]
+   ```
+
+   You should see `REPLY from …` lines. If you do but Companion doesn't, the firewall is the cause (see point 2). If you don't, the issue is on the Paradigm side.
+
+4. **The object name is wrong.** PSAP is case-sensitive and rejects unknown names. Use the **Send Raw PSAP Command** action with `macro get YourMacroName` and watch the connection log — you'll see either a state line or `error invalid macro …`.
+
+### Action fires but nothing changes on the lights
+
+- Wrong name (most common). Try `... get` via Raw Command.
+- Wrong space. Drop the `@ Space` part to let Paradigm resolve.
+- Wrong action variant — e.g. trying to activate a preset as HTP when it's configured as LTP. Try the other variant.
+
+## Reference
+
+- [Paradigm Serial Access Protocol v6.0 Configuration Guide (ETC)](https://www.etcconnect.com/WorkArea/DownloadAsset.aspx?id=10737519244)
+- [Paradigm Serial Access Protocol support page](https://support.etcconnect.com/ETC/Architectural/Paradigm/Paradigm_Serial_Access_Protocol_PSAP)
