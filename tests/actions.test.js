@@ -1,359 +1,199 @@
-// Import the function and helper function
-const actions = require('../actions')
-const clamp = require('../actions').clamp
-describe('Module Tests', () => {
-  let self;
-
-  beforeEach(() => {
-    self = {
-      CHOICES_PRESETS: [
-        { id: '1', label: 'Preset 1' },
-        { id: '2', label: 'Preset 2' },
-      ],
-      CHOICES_OVERRIDES: [
-        { id: '1', label: 'Override 1' },
-        { id: '2', label: 'Override 2' },
-      ],
-      CHOICES_MACROS: [
-        { id: '1', label: 'Macro 1' },
-        { id: '2', label: 'Macro 2' },
-      ],
-      CHOICES_WALLS: [
-        { id: '1', label: 'Wall 1' },
-        { id: '2', label: 'Wall 2' },
-      ],
-      CHOICES_SEQUENCES: [
-        { id: '1', label: 'Sequence 1' },
-        { id: '2', label: 'Sequence 2' },
-      ],
-      CHOICES_CHANNELS: [
-        { id: '1', label: 'Channel 1' },
-        { id: '2', label: 'Channel 2' },
-      ],
-      setupChoices: jest.fn(),
-      setActionDefinitions: jest.fn(),
-      device: {
-        runPresetAction: jest.fn(),
-        runOverridesAction: jest.fn(),
-        runMacroAction: jest.fn(),
-        runWallAction: jest.fn(),
-        runSequencesAction: jest.fn(),
-        runChannelsAction: jest.fn(),
-      },
-      getStates: jest.fn(),
-      log: jest.fn(),
-      getVariableValue: jest.fn(),
-      setVariableValues: jest.fn(),
-    };
-
-    
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should set actions to companion', () => {
-    actions(self)
-    expect(self.setActionDefinitions).toHaveBeenCalled()
-  });
-
-  it('should not have an empty tooltip.', async () => {
-
-    // await actions(self);
-    await actions(self)
-    const moduleActions = self.setActionDefinitions.mock.calls[0][0]
-
-    // make sure each one doesn't have an empty tooltip
-    for (const key in moduleActions) {
-      if (Object.hasOwnProperty.call(moduleActions, key)) {
-        const element = moduleActions[key];
-
-        // go through all the options
-        element.options.forEach(each => {
-          if (each.tooltip !== undefined) {
-            expect(each.tooltip.length).toBeGreaterThan(0)
-          } else {
-            expect(each.tooltip).toBeUndefined()
-          }
-        })
-      }
-    }
-  });
-
-  it('should activate/deactivate a preset', async () => {
-    const event = {
-      options: {
-        wantedState: 'activate',
-        presetID: '0',
-      },
-    };
-
-    // await actions(self);
-    await actions(self)
-    const activateDeactivatePreset = self.setActionDefinitions.mock.calls[0][0].activateDeactivatePreset
-    // check to make sure everything looks right
-
-    // test the callback
-    expect(self.setActionDefinitions).toHaveBeenCalled()
-    await activateDeactivatePreset.callback(event);
-
-    expect(self.device.runPresetAction).toHaveBeenCalledWith('activate', '0');
-    // expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should log when it has an error', async () => {
-    const event = {
-      options: {
-        wantedState: 'activate',
-        presetID: '0',
-      },
-    };
-
-    await actions(self)
-    const activateDeactivatePreset = self.setActionDefinitions.mock.calls[0][0].activateDeactivatePreset
-    // test the callback
-
-    // set the mock to reject
-    self.device.runPresetAction.mockRejectedValueOnce(new Error('Mocked error'));
-
-    const result = await activateDeactivatePreset.callback(event);
-    expect(self.log).toHaveBeenCalledWith('error', 'Mocked error');
-    expect(self.device.runPresetAction).toHaveBeenCalledWith('activate', '0');
-  });
-
-  it('should record a preset', async () => {
-    const event = {
-      options: {
-        presetID: '1',
-      },
-    };
-
-    await actions(self)
-    const recordPreset = self.setActionDefinitions.mock.calls[0][0].recordPreset
-    await recordPreset.callback(event);
-
-    expect(self.device.runPresetAction).toHaveBeenCalledWith('record', '1');
-  });
-
-  it('should log when it has an error with recording a preset', async () => {
-    const event = {
-      options: {
-        presetID: '0',
-      },
-    };
-
-    // set the mock to reject
-    self.device.runPresetAction.mockRejectedValueOnce(new Error('Mocked error'));
-
-    await actions(self)
-    const recordPreset = self.setActionDefinitions.mock.calls[0][0].recordPreset
-    await recordPreset.callback(event);
-
-    
-    expect(self.device.runPresetAction).toHaveBeenCalledWith('record', '0');
-    expect(self.log).toHaveBeenCalledWith('error', 'Mocked error');
-    // expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should change overrides state', async () => {
-    const event = {
-      options: {
-        wantedState: 'activate',
-        overrideID: '1',
-      },
-    };
-
-    await actions(self);
-    const changeOverridesState = self.setActionDefinitions.mock.calls[0][0].changeOverridesState;
-    await changeOverridesState.callback(event);
-
-    expect(self.device.runOverridesAction).toHaveBeenCalledWith('activate', '1');
-    expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should change macro state', async () => {
-    const event = {
-      options: {
-        wantedState: 'on',
-        macroID: '1',
-      },
-    };
-
-    self.device.runMacroAction.mockReturnValueOnce({
-      id: 1,
-      state: 2
-    })
-
-    await actions(self);
-    const changeMacroState = self.setActionDefinitions.mock.calls[0][0].changeMacroState;
-    await changeMacroState.callback(event);
-
-    expect(self.device.runMacroAction).toHaveBeenCalledWith('on', '1');
-    expect(self.setVariableValues).toHaveBeenCalledWith({
-      'macro_1_state': 2
-    });
-  });
-
-  it('should open wall when wall is closed', async () => {
-    const event = {
-      options: {
-        wantedState: '1',
-        wallID: '1',
-      },
-    };
-
-    await actions(self);
-    const changeWallState = self.setActionDefinitions.mock.calls[0][0].changeWallState;
-
-    // mock current wall state
-    self.getVariableValue.mockReturnValueOnce(0)
-    await changeWallState.callback(event);
-
-    expect(self.getVariableValue).toHaveBeenCalledWith(`wall_${event.options.wallID}_state`);
-
-    expect(self.device.runWallAction).toHaveBeenCalledWith('toggle', '1');
-    expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should close wall when wall is open', async () => {
-    const event = {
-      options: {
-        wantedState: '0',
-        wallID: '1',
-      },
-    };
-
-    // mock current wall state
-    self.getVariableValue.mockReturnValueOnce(1)
-
-    await actions(self);
-    const changeWallState = self.setActionDefinitions.mock.calls[0][0].changeWallState;
-    await changeWallState.callback(event);
-
-    expect(self.getVariableValue).toHaveBeenCalledWith(`wall_${event.options.wallID}_state`);
-
-    expect(self.device.runWallAction).toHaveBeenCalledWith('toggle', '1');
-    expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should not close wall when wall is already closed', async () => {
-    const event = {
-      options: {
-        wantedState: '0',
-        wallID: '1',
-      },
-    };
-
-    // mock current wall state
-    self.getVariableValue.mockReturnValueOnce(0)
-
-    await actions(self);
-    const changeWallState = self.setActionDefinitions.mock.calls[0][0].changeWallState;
-    await changeWallState.callback(event);
-
-    expect(self.getVariableValue).toHaveBeenCalledWith(`wall_${event.options.wallID}_state`);
-
-    expect(self.device.runWallAction).not.toHaveBeenCalled();
-    expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should not open wall when wall is already already', async () => {
-    const event = {
-      options: {
-        wantedState: '1',
-        wallID: '1',
-      },
-    };
-
-    // mock current wall state
-    self.getVariableValue.mockReturnValueOnce(1)
-
-    await actions(self);
-    const changeWallState = self.setActionDefinitions.mock.calls[0][0].changeWallState;
-    await changeWallState.callback(event);
-
-    expect(self.getVariableValue).toHaveBeenCalledWith(`wall_${event.options.wallID}_state`);
-
-    expect(self.device.runWallAction).not.toHaveBeenCalled();
-    expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should toggle wall state', async () => {
-    const event = {
-      options: {
-        wantedState: 'toggle',
-        wallID: '1',
-      },
-    };
-
-    
-
-    await actions(self);
-    // mock current wall state
-    self.getVariableValue.mockReturnValueOnce(0)
-    const changeWallState = self.setActionDefinitions.mock.calls[0][0].changeWallState;
-    await changeWallState.callback(event);
-
-    expect(self.getVariableValue).toHaveBeenCalledWith(`wall_${event.options.wallID}_state`);
-
-    expect(self.device.runWallAction).toHaveBeenCalledWith('toggle', '1');
-    expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should run sequences action', async () => {
-    const event = {
-      options: {
-        wantedState: 'start',
-        sequenceID: '1',
-      },
-    };
-
-    await actions(self);
-    const runSequenceAction = self.setActionDefinitions.mock.calls[0][0].runSequenceAction;
-    await runSequenceAction.callback(event);
-
-    expect(self.device.runSequencesAction).toHaveBeenCalledWith('start', '1');
-    expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should set channel level', async () => {
-    const event = {
-      options: {
-        wantedState: '1',
-        channelID: '1',
-      },
-    };
-
-    await actions(self);
-    const setChannelLevel = self.setActionDefinitions.mock.calls[0][0].setChannelLevel;
-    await setChannelLevel.callback(event);
-
-    expect(self.device.runChannelsAction).toHaveBeenCalledWith('set_level', '1', '1');
-    expect(self.getStates).toHaveBeenCalled();
-  });
-
-  it('should adjust channel level', async () => {
-    const event = {
-      options: {
-        wantedState: 10,
-        channelID: '1',
-      },
-    };
-    self.getVariableValue.mockReturnValueOnce(50);
-
-    await actions(self);
-    const adjustChannelLevel = self.setActionDefinitions.mock.calls[0][0].adjustChannelLevel;
-    await adjustChannelLevel.callback(event);
-
-    expect(self.getVariableValue).toHaveBeenCalledWith('channel_1_level');
-    expect(self.setVariableValues).toHaveBeenCalledWith({ channel_1_level: 60 });
-    expect(self.device.runChannelsAction).toHaveBeenCalledWith('set_level', '1', 60);
-  });
-
-  it('should clamp a value between min and max', () => {
-    expect(clamp(10, 0, 100)).toBe(10);
-    expect(clamp(-10, 0, 100)).toBe(0);
-    expect(clamp(200, 0, 100)).toBe(100);
-  });
-});
+const setupActions = require('../actions')
+
+function makeSelf() {
+	return {
+		device: {
+			macro: jest.fn(),
+			preset: jest.fn(),
+			channel: jest.fn(),
+			wall: jest.fn(),
+			sequence: jest.fn(),
+			override: jest.fn(),
+			space: jest.fn(),
+			send: jest.fn(),
+		},
+		log: jest.fn(),
+		setActionDefinitions: jest.fn(),
+		parseVariablesInString: jest.fn(async (s) => s),
+	}
+}
+
+function getDefinitions(self) {
+	setupActions(self)
+	return self.setActionDefinitions.mock.calls[0][0]
+}
+
+describe('actions.js', () => {
+	let self
+	let defs
+
+	beforeEach(() => {
+		self = makeSelf()
+		defs = getDefinitions(self)
+	})
+
+	it('defines the expected action ids', () => {
+		expect(Object.keys(defs)).toEqual([
+			'macro',
+			'preset',
+			'channelSet',
+			'channelAdjust',
+			'channelToggle',
+			'wall',
+			'sequence',
+			'sequenceRate',
+			'override',
+			'space',
+			'rawCommand',
+		])
+	})
+
+	describe('guard behavior shared by every action', () => {
+		it('warns and skips the action when there is no open device', async () => {
+			self.device = null
+			await defs.macro.callback({ options: { name: 'Macro 1', action: 'on' } })
+			expect(self.log).toHaveBeenCalledWith('warn', 'PSAP socket not open — action skipped')
+		})
+
+		it('catches and logs errors thrown by the callback', async () => {
+			self.device.macro.mockImplementation(() => {
+				throw new Error('send failed')
+			})
+			await defs.macro.callback({ options: { name: 'Macro 1', action: 'on' } })
+			expect(self.log).toHaveBeenCalledWith('error', 'Action error: send failed')
+		})
+	})
+
+	describe('macro', () => {
+		it('sends the resolved name and raw action', async () => {
+			await defs.macro.callback({ options: { name: 'Macro 1', action: 'on' } })
+			expect(self.device.macro).toHaveBeenCalledWith('on', 'Macro 1')
+		})
+
+		it('does nothing when the resolved name is blank', async () => {
+			await defs.macro.callback({ options: { name: '   ', action: 'on' } })
+			expect(self.device.macro).not.toHaveBeenCalled()
+		})
+	})
+
+	describe('preset', () => {
+		it('passes action, name, space, fade and priority through', async () => {
+			await defs.preset.callback({
+				options: { name: 'Preset 1', action: 'act', space: 'Space 1', fade: '2.5', priority: '100' },
+			})
+			expect(self.device.preset).toHaveBeenCalledWith({
+				action: 'act',
+				name: 'Preset 1',
+				space: 'Space 1',
+				fade: '2.5',
+				priority: '100',
+			})
+		})
+
+		it('leaves space/fade/priority undefined when blank', async () => {
+			await defs.preset.callback({ options: { name: 'Preset 1', action: 'act' } })
+			expect(self.device.preset).toHaveBeenCalledWith({
+				action: 'act',
+				name: 'Preset 1',
+				space: undefined,
+				fade: undefined,
+				priority: undefined,
+			})
+		})
+	})
+
+	describe('channelSet', () => {
+		it('sends an int action with the level as a percentage', async () => {
+			await defs.channelSet.callback({ options: { name: 'Dimmer 2', level: 75, space: 'Space 1', fade: '1' } })
+			expect(self.device.channel).toHaveBeenCalledWith({
+				action: 'int',
+				name: 'Dimmer 2',
+				value: '75%',
+				space: 'Space 1',
+				fade: '1',
+			})
+		})
+	})
+
+	describe('channelAdjust', () => {
+		it('sends the chosen direction with the amount as a percentage', async () => {
+			await defs.channelAdjust.callback({ options: { name: 'Dimmer 2', direction: 'ras', amount: 10 } })
+			expect(self.device.channel).toHaveBeenCalledWith({
+				action: 'ras',
+				name: 'Dimmer 2',
+				value: '10%',
+				space: undefined,
+				fade: undefined,
+			})
+		})
+	})
+
+	describe('channelToggle', () => {
+		it('sends a tog action without a value', async () => {
+			await defs.channelToggle.callback({ options: { name: 'Dimmer 2', space: 'Space 1' } })
+			expect(self.device.channel).toHaveBeenCalledWith({
+				action: 'tog',
+				name: 'Dimmer 2',
+				space: 'Space 1',
+				fade: undefined,
+			})
+		})
+	})
+
+	describe('wall', () => {
+		it('sends the chosen action with name and space', async () => {
+			await defs.wall.callback({ options: { name: 'Wall 1', action: 'open', space: 'Space 1' } })
+			expect(self.device.wall).toHaveBeenCalledWith({ action: 'open', name: 'Wall 1', space: 'Space 1' })
+		})
+	})
+
+	describe('sequence', () => {
+		it('sends the chosen action with name, space and priority', async () => {
+			await defs.sequence.callback({ options: { name: 'Seq 1', action: 'start', space: 'Space 1', priority: '50' } })
+			expect(self.device.sequence).toHaveBeenCalledWith({
+				action: 'start',
+				name: 'Seq 1',
+				space: 'Space 1',
+				priority: '50',
+			})
+		})
+	})
+
+	describe('sequenceRate', () => {
+		it('sends a rate action with the raw numeric rate', async () => {
+			await defs.sequenceRate.callback({ options: { name: 'Seq 1', rate: 2 } })
+			expect(self.device.sequence).toHaveBeenCalledWith({ action: 'rate', name: 'Seq 1', value: 2 })
+		})
+	})
+
+	describe('override', () => {
+		it('sends the chosen action with name', async () => {
+			await defs.override.callback({ options: { name: 'Override 1', action: 'enab' } })
+			expect(self.device.override).toHaveBeenCalledWith({ action: 'enab', name: 'Override 1' })
+		})
+	})
+
+	describe('space', () => {
+		it('sends the chosen action with value as a percentage and fade', async () => {
+			await defs.space.callback({ options: { name: 'Space 1', action: 'master', value: 50, fade: '3' } })
+			expect(self.device.space).toHaveBeenCalledWith({
+				action: 'master',
+				name: 'Space 1',
+				value: '50%',
+				fade: '3',
+			})
+		})
+	})
+
+	describe('rawCommand', () => {
+		it('sends the resolved raw command', async () => {
+			await defs.rawCommand.callback({ options: { cmd: 'help' } })
+			expect(self.device.send).toHaveBeenCalledWith('help')
+		})
+
+		it('does not send when the resolved command is blank', async () => {
+			await defs.rawCommand.callback({ options: { cmd: '   ' } })
+			expect(self.device.send).not.toHaveBeenCalled()
+		})
+	})
+})
