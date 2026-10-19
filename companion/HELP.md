@@ -2,7 +2,7 @@
 
 A module for controlling ETC-Paradigm Architectural Control Systems.
 
-** Connection **
+**Connection**
 This module needs to be run from a computer on the same network as the Paradigm system.
 
 **Available Commands**
